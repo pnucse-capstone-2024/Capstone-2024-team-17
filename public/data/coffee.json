@@ -1,0 +1,75 @@
+[
+    {
+      "pId": 1,
+      "coffeeName": "Guatemala Antigua",
+      "price": 4.00,
+      "description": "Bright acidity and a complex flavor profile"
+    },
+    {
+      "pId": 2,
+      "coffeeName": "Kenya Gatagua AA",
+      "price": 3.00,
+      "description": "Strong acidity and fruity notes"
+    },
+    {
+      "pId": 3,
+      "coffeeName": "Indonesia Sumatra Mandhelling",
+      "price": 3.50,
+      "description": "Full body, earthy tones, and spicy flavor"
+    },
+    {
+      "pId": 4,
+      "coffeeName": "Colombia Medellin Supremo",
+      "price": 5.60,
+      "description": "Smooth and well-balanced taste"
+    },
+    {
+      "pId": 5,
+      "coffeeName": "Ethiopia Yirgacheffe",
+      "price": 4.80,
+      "description": "Bright acidity, floral notes, and fruity flavor"
+    },
+    {
+      "pId": 6,
+      "coffeeName": "Brazil Cerrado",
+      "price": 3.50,
+      "description": "Nutty flavor and smooth body"
+    },
+    {
+      "pId": 7,
+      "coffeeName": "Vietnam Robusta",
+      "price": 5.60,
+      "description": "High caffeine content and a strong, bitter taste"
+    },
+    {
+      "pId": 8,
+      "coffeeName": "Costa Rica Tarrazu",
+      "price": 3.50,
+      "description": "A well-balanced flavor with a good mix of acidity and sweetness"
+    },
+    {
+      "pId": 9,
+      "coffeeName": "Aurora Venecia Natural",
+      "price": 7.40,
+      "description": "A high-quality natural process coffee"
+    },
+    {
+      "pId": 10,
+      "coffeeName": "Peru Penachi",
+      "price": 5.30,
+      "description": "Balanced flavor and smooth acidity"
+    },
+    {
+      "pId": 11,
+      "coffeeName": "Las Rosas",
+      "price": 4.00,
+      "description": "Unique flavors of its origin"
+    },
+    {
+      "pId": 12,
+      "coffeeName": "MURAMBA",
+      "price": 5.20,
+      "description": "Fruity notes and bright acidity"
+    }
+  ]
+  
