@@ -31,23 +31,24 @@
         </table>
         <article>
             <article>
-                <h2>-Your Order</h2>
-                <h3>Details</h3>
+                <h2 style="margin-top: 40px; margin-left: -5%;">Order Details</h2>
             </article>
             <section>
                 <ul v-for="(coffee,idx) in coffeeItems" :key="idx">
                     <li v-if="coffee[1].type !== 'Beverage'">
-                        <p><span>{{coffee[1].coffeeName}}</span> x {{coffee[1].amount}}(100g)</p>
+                        <p><span style="margin-left: 10px;">{{coffee[1].coffeeName}}</span> x {{coffee[1].amount}}(100g)</p>
                     </li>
+                    <!--
                     <li v-if="coffee[1].type === 'Beverage'">
                         <p><span>{{coffee[1].coffeeName}}</span> x {{coffee[1].amount}} Glass</p><p>Type: {{coffee[1].bTemp}} {{coffee[1].bType}}</p><p>Size: {{coffee[1].bSize}}</p>
                     </li>
+                    -->
                 </ul>
                 <section>
                     <h3>SubTotal: {{this.subTotal.toFixed(2)}}<small>({{this.totalPrice.toFixed(2)}}(price) - {{this.discountPrice.toFixed(2)}}(discount) + {{this.tax.toFixed(2)}}(tax))</small></h3>
-                    <input v-model="mPoint" type="number" placeholder="Insert Points" min="0" :max='logedUser.point'/>
-                    <button @click="usePoint" type="button">Apply ETH</button>
-                    <p>Available ETH: {{ this.logedUser.point }} - {{this.mPoint}}</p>
+                    <!--<input v-model="mPoint" type="number" placeholder="Insert Points" min="0" :max='logedUser.point'/>
+                    <button @click="usePoint" type="button">Apply ETH</button> -->
+                    <p style="margin-top: 20px;">Available ETH: {{ userBalance }}</p>
                 </section>
                 <h2>-Total:{{this.tmpPrice.toFixed(2)}}<small>({{this.subTotal.toFixed(2)}}-{{this.mPoint}} Eths)</small></h2>
                 <small>Reward ETH: {{this.addPoint}}</small>
@@ -75,6 +76,9 @@
     </div>
 </template>
 <script>
+
+import Web3 from 'web3';
+
 export default {
     name:'CartTableCompo',
     props:['cartList'],
@@ -88,6 +92,7 @@ export default {
             discountPrice:0,
             mPoint:0,
             logedUser:'',
+            userBalance: 0,
             pointFlag:true,
             totalPoint:0,
             tmpPoint:0,
@@ -102,6 +107,18 @@ export default {
         }
     },
     methods:{
+        async loadUserBalance() {
+            try {
+                this.accounts = await this.web3.eth.getAccounts();
+                const userId = this.logedUser.id; // 로그인한 사용자의 ID를 가져옴
+                const balance = await this.web3.eth.getBalance(this.accounts[userId]); // 해당 인덱스의 이더리움 잔액 조회
+                this.userBalance = this.web3.utils.fromWei(balance, 'ether'); // 잔액을 ETH로 변환하여 저장
+            } 
+            catch (error) {
+            console.error('Error fetching ETH balance:', error);
+            }
+        },
+
         remItem(pid){
             // console.log(pid);
             this.totalPrice = 0;
@@ -114,7 +131,7 @@ export default {
             })
         },
         usePoint(){
-            this.totalPoint = this.logedUser.point;
+            this.totalPoint = this.userBalance;
             this.tmpPrice = this.subTotal;
             if(this.mPoint < this.totalPoint && 0 < (this.tmpPrice - this.mPoint) ){
                 this.tmpPrice -= this.mPoint;
@@ -156,7 +173,9 @@ export default {
             immediate:true,
         },
     },
-    mounted(){
+    async mounted(){
+        this.web3 = new Web3(new Web3.providers.HttpProvider('http://127.0.0.1:7545'));  // Ganache에 연결
+        await this.loadUserBalance();  // 로그인한 사용자의 잔액을 로드
         this.logedUser = JSON.parse(sessionStorage.getItem('logeduser'));
     }
 }
@@ -210,6 +229,7 @@ article > article{
 ul{
     margin-top: 3%;
     margin-bottom: 3%;
+    padding-left: 40px;
 }
 input{
     background: transparent;

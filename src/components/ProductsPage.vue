@@ -8,7 +8,7 @@
             <div class="PageDetails">
               <article v-if="memberstat !== null">
                 <h2>Welcome {{ fullName }}</h2>
-                <h3 v-show="memberstat">Membership: Gold Member | ETH(Ξ): {{ userBalance }}</h3>
+                <h3 v-show="memberstat">Membership: Full Member | ETH(Ξ): {{ userBalance }}</h3>
                 <h3 v-show="!memberstat">Membership: None</h3>
               </article>
               <article v-if="memberstat === false">
@@ -39,7 +39,7 @@
         </section>
       </section>
     </div>
-  </template>
+</template>
   
   <script>
   import Web3 from 'web3';
