@@ -10,8 +10,8 @@ Before running the project, make sure to install the necessary packages. There a
 
 The following commands need to be run globally to make Vue CLI and Vue available across your entire system:
 
-`npm install vue -g`  
-`npm install @vue/cli -g`
+   ### `npm install vue -g`  
+   ### `npm install @vue/cli -g`
 
 These commands install `vue` and `@vue/cli` globally, allowing you to use Vue commands like `vue create` from anywhere in your terminal.
 
@@ -25,14 +25,14 @@ The following commands should be executed in the root directory of your project 
 
 2. Then run the local installation commands:
 
-`npm install axios`  
-`npm install vue-router`  
-`npm install web3`
+   ### `npm install axios`  
+   ### `npm install vue-router`  
+   ### `npm install web3`
 
 ### Running the Project
 
 In the project directory, you can run:
 
-`npm run serve`
+   ### `npm run serve`
 
 This command starts the development server, and you can view the project in your browser at `http://localhost:8080`.
