@@ -1,0 +1,162 @@
+{
+    "abi":
+	[
+        {
+            "constant": true,
+            "inputs": [],
+            "name": "seller",
+            "outputs": [
+                {
+                    "name": "",
+                    "type": "address"
+                }
+            ],
+            "payable": false,
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "constant": true,
+            "inputs": [],
+            "name": "coffeeCount",
+            "outputs": [
+                {
+                    "name": "",
+                    "type": "uint256"
+                }
+            ],
+            "payable": false,
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "constant": true,
+            "inputs": [
+                {
+                    "name": "",
+                    "type": "uint256"
+                }
+            ],
+            "name": "coffees",
+            "outputs": [
+                {
+                    "name": "name",
+                    "type": "string"
+                },
+                {
+                    "name": "pricePerUnit",
+                    "type": "uint256"
+                },
+                {
+                    "name": "availableQuantity",
+                    "type": "uint256"
+                }
+            ],
+            "payable": false,
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "constant": false,
+            "inputs": [
+                {
+                    "name": "coffeeId",
+                    "type": "uint256"
+                },
+                {
+                    "name": "quantity",
+                    "type": "uint256"
+                }
+            ],
+            "name": "purchaseCoffee",
+            "outputs": [],
+            "payable": true,
+            "stateMutability": "payable",
+            "type": "function"
+        },
+        {
+            "constant": false,
+            "inputs": [
+                {
+                    "name": "newSeller",
+                    "type": "address"
+                }
+            ],
+            "name": "updateSeller",
+            "outputs": [],
+            "payable": false,
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "inputs": [
+                {
+                    "name": "_seller",
+                    "type": "address"
+                }
+            ],
+            "payable": false,
+            "stateMutability": "nonpayable",
+            "type": "constructor"
+        },
+        {
+            "anonymous": false,
+            "inputs": [
+                {
+                    "indexed": false,
+                    "name": "coffeeId",
+                    "type": "uint256"
+                },
+                {
+                    "indexed": false,
+                    "name": "name",
+                    "type": "string"
+                },
+                {
+                    "indexed": false,
+                    "name": "pricePerUnit",
+                    "type": "uint256"
+                },
+                {
+                    "indexed": false,
+                    "name": "availableQuantity",
+                    "type": "uint256"
+                }
+            ],
+            "name": "CoffeeAdded",
+            "type": "event"
+        },
+        {
+            "anonymous": false,
+            "inputs": [
+                {
+                    "indexed": false,
+                    "name": "coffeeId",
+                    "type": "uint256"
+                },
+                {
+                    "indexed": false,
+                    "name": "name",
+                    "type": "string"
+                },
+                {
+                    "indexed": false,
+                    "name": "quantity",
+                    "type": "uint256"
+                },
+                {
+                    "indexed": false,
+                    "name": "totalPrice",
+                    "type": "uint256"
+                },
+                {
+                    "indexed": false,
+                    "name": "buyer",
+                    "type": "address"
+                }
+            ],
+            "name": "CoffeePurchased",
+            "type": "event"
+        }
+    ]
+}
