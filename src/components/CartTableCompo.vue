@@ -5,7 +5,7 @@
                 <tr>
                     <th>Product</th>
                     <th>Size</th>
-                    <th>Hot/Cold</th>
+                    <th>-</th>
                     <th>Type</th>
                     <th>Price</th>
                     <th>Amount</th>
@@ -31,40 +31,29 @@
         </table>
         <article>
             <article>
-                <h2>-Your Order</h2>
-                <h3>Details</h3>
+                <h2 style="margin-top: 40px; margin-left: -5%;">Order Details</h2>
             </article>
             <section>
                 <ul v-for="(coffee,idx) in coffeeItems" :key="idx">
                     <li v-if="coffee[1].type !== 'Beverage'">
-                        <p><span>{{coffee[1].coffeeName}}</span> x {{coffee[1].amount}}(100g)</p>
-                    </li>
-                    <li v-if="coffee[1].type === 'Beverage'">
-                        <p><span>{{coffee[1].coffeeName}}</span> x {{coffee[1].amount}} Glass</p><p>Type: {{coffee[1].bTemp}} {{coffee[1].bType}}</p><p>Size: {{coffee[1].bSize}}</p>
+                        <p><span style="margin-left: 10px;">{{coffee[1].coffeeName}}</span> x {{coffee[1].amount}}(100g)</p>
                     </li>
                 </ul>
                 <section>
                     <h3>SubTotal: {{this.subTotal.toFixed(2)}}<small>({{this.totalPrice.toFixed(2)}}(price) - {{this.discountPrice.toFixed(2)}}(discount) + {{this.tax.toFixed(2)}}(tax))</small></h3>
-                    <input v-model="mPoint" type="number" placeholder="Insert Points" min="0" :max='logedUser.point'/>
-                    <button @click="usePoint" type="button">Apply ETH</button>
-                    <p>Available ETH: {{ this.logedUser.point }} - {{this.mPoint}}</p>
+                    <p style="margin-top: 20px;">
+                        Available ETH:
+                        <button @click="goToProductsPage">Check ETH on Products Page</button> </p>
                 </section>
-                <h2>-Total:{{this.tmpPrice.toFixed(2)}}<small>({{this.subTotal.toFixed(2)}}-{{this.mPoint}} Eths)</small></h2>
-                <small>Reward ETH: {{this.addPoint}}</small>
+                <h2>-Total:{{this.tmpPrice.toFixed(2)}}<small>({{this.subTotal.toFixed(2)}} ETH)</small></h2>
             </section>
             <section>
                 <h2>-Shipping Info</h2>
-                <form>
+                <form @submit.prevent="orderFunc">
                     <label>Address: <input v-model="shipAddr" type="text" placeholder="Write address" required></label>
                     <label>Phone: <input v-model="shipTel" type="tel" placeholder="Write phone number" required></label>
                     <br/>
                     <br/>
-                    <!--
-                    <label>[Card Information]</label>
-                    <p>Card number: <input v-model="cardNum" type="text" placeholder="**** **** **** ****" required></p>
-                    <p>Expiry(MM/YY): <input v-model="cardExp" type="text" placeholder="MM/YY" required></p>
-                    <p>Card code: <input v-model="cardCvc" type="text" placeholder="cvc" required></p>
-                    -->
                     <p><input v-model="chBox" type="checkbox" required> Your personal data will be used to process your order, support your experience throughout this website, and for other purposes described in our "Privacy policy" and "terms and conditions".</p>
                     <button @click="orderFunc" type="submit">Place order</button>
                 </form>
@@ -75,6 +64,8 @@
     </div>
 </template>
 <script>
+
+
 export default {
     name:'CartTableCompo',
     props:['cartList'],
@@ -94,9 +85,6 @@ export default {
             addPoint:0,
             shipAddr:'',
             shipTel:'',
-            cardNum:'',
-            cardExp:'',
-            cardCvc:'',
             chBox:false,
             show: false
         }
@@ -114,7 +102,7 @@ export default {
             })
         },
         usePoint(){
-            this.totalPoint = this.logedUser.point;
+            this.totalPoint = this.userBalance;
             this.tmpPrice = this.subTotal;
             if(this.mPoint < this.totalPoint && 0 < (this.tmpPrice - this.mPoint) ){
                 this.tmpPrice -= this.mPoint;
@@ -123,11 +111,13 @@ export default {
             }
         },
         orderFunc(){
+            if (!this.chBox) {  // 체크박스가 체크되지 않았을 경우
+                alert("Please agree to the Privacy Policy and Terms and Conditions.");  // 경고 메시지를 표시합니다.
+                return;  // 함수 종료
+            }
+
             this.shipAddr='';
             this.shipTel='';
-            this.cardNum='';
-            this.cardExp='';
-            this.cardCvc='';
             this.chBox = false;
             this.logedUser.point -= this.mPoint;
             this.logedUser.point += this.addPoint;
@@ -137,6 +127,9 @@ export default {
             location.reload();
             this.show = true;
             return false;
+        },
+        goToProductsPage() {
+            this.$router.push({ name: 'products-page' });  // ProductsPage로 이동
         }
     },
     watch:{
@@ -210,6 +203,7 @@ article > article{
 ul{
     margin-top: 3%;
     margin-bottom: 3%;
+    padding-left: 40px;
 }
 input{
     background: transparent;

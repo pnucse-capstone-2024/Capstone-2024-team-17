@@ -8,8 +8,8 @@
                     <section>
                         <h2>Welcome to the Blockchain Coffee Shop!!</h2>
                         <h4>-You can buy coffee beans with Ethereum!!!</h4>
-                        <h4>-Earn points (ETH) by purchasing our products</h4>
-                        <h4>-5% of your final purchase is converted in points</h4>
+                        <h4>-Conduct secure transactions by purchasing products with Ethereum</h4>
+                        <h4>-Ethereum is a globally recognized digital asset</h4>
                         <button type="button" @click="redirectToMembership">Join now &#8594;</button>
                     </section>
                     <section>
