@@ -10,8 +10,9 @@ This project was adapted from the Coffee Store Project by [LukeShin3022](https:/
     ### `npm install @vue/cli -g`
     ### `npm install axios`
     ### `npm install vue-router`
+    ### * `npm install web3`
 
-3. In the project directory, you can run:
+4. In the project directory, you can run:
     ### `npm run serve`
 
 
