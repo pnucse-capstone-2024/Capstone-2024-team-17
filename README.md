@@ -10,9 +10,10 @@ Before running the project, make sure to install the necessary packages. There a
 
 1. The following commands need to be run globally to make Vue CLI and Vue available across your entire system:
 
-```bash
+\```bash
 npm install vue -g
 npm install @vue/cli -g
+\```
 
 These commands install vue and @vue/cli globally, allowing you to use Vue commands like vue create from anywhere in your terminal.
 
