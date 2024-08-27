@@ -8,12 +8,10 @@ Before running the project, make sure to install the necessary packages. There a
 
 ### Global Installation (can be run from any directory)
 
-1. The following commands need to be run globally to make Vue CLI and Vue available across your entire system:
+The following commands need to be run globally to make Vue CLI and Vue available across your entire system:
 
-\```bash
-npm install vue -g
-npm install @vue/cli -g
-\```
+## npm install vue -g
+## npm install @vue/cli -g
 
 These commands install vue and @vue/cli globally, allowing you to use Vue commands like vue create from anywhere in your terminal.
 
@@ -26,12 +24,10 @@ ex) cd "C:\Users\username\OneDrive\바탕 화면\vue_projects\CoffeeBean-main"
 
 Then run the local installation commands:
 
-```bash
-npm install axios
-npm install vue-router
-npm install web3
+## npm install axios
+## npm install vue-router
+## npm install web3
+
 
 3. In the project directory, you can run:
     ### `npm run serve`
-
-
