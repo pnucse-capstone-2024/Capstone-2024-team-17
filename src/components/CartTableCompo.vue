@@ -5,7 +5,7 @@
                 <tr>
                     <th>Product</th>
                     <th>Size</th>
-                    <th>Hot/Cold</th>
+                    <th>-</th>
                     <th>Type</th>
                     <th>Price</th>
                     <th>Amount</th>
@@ -38,34 +38,22 @@
                     <li v-if="coffee[1].type !== 'Beverage'">
                         <p><span style="margin-left: 10px;">{{coffee[1].coffeeName}}</span> x {{coffee[1].amount}}(100g)</p>
                     </li>
-                    <!--
-                    <li v-if="coffee[1].type === 'Beverage'">
-                        <p><span>{{coffee[1].coffeeName}}</span> x {{coffee[1].amount}} Glass</p><p>Type: {{coffee[1].bTemp}} {{coffee[1].bType}}</p><p>Size: {{coffee[1].bSize}}</p>
-                    </li>
-                    -->
                 </ul>
                 <section>
                     <h3>SubTotal: {{this.subTotal.toFixed(2)}}<small>({{this.totalPrice.toFixed(2)}}(price) - {{this.discountPrice.toFixed(2)}}(discount) + {{this.tax.toFixed(2)}}(tax))</small></h3>
-                    <!--<input v-model="mPoint" type="number" placeholder="Insert Points" min="0" :max='logedUser.point'/>
-                    <button @click="usePoint" type="button">Apply ETH</button> -->
-                    <p style="margin-top: 20px;">Available ETH: {{ userBalance }}</p>
+                    <p style="margin-top: 20px;">
+                        Available ETH:
+                        <button @click="goToProductsPage">Check ETH on Products Page</button> </p>
                 </section>
-                <h2>-Total:{{this.tmpPrice.toFixed(2)}}<small>({{this.subTotal.toFixed(2)}}-{{this.mPoint}} Eths)</small></h2>
-                <small>Reward ETH: {{this.addPoint}}</small>
+                <h2>-Total:{{this.tmpPrice.toFixed(2)}}<small>({{this.subTotal.toFixed(2)}} ETH)</small></h2>
             </section>
             <section>
                 <h2>-Shipping Info</h2>
-                <form>
+                <form @submit.prevent="orderFunc">
                     <label>Address: <input v-model="shipAddr" type="text" placeholder="Write address" required></label>
                     <label>Phone: <input v-model="shipTel" type="tel" placeholder="Write phone number" required></label>
                     <br/>
                     <br/>
-                    <!--
-                    <label>[Card Information]</label>
-                    <p>Card number: <input v-model="cardNum" type="text" placeholder="**** **** **** ****" required></p>
-                    <p>Expiry(MM/YY): <input v-model="cardExp" type="text" placeholder="MM/YY" required></p>
-                    <p>Card code: <input v-model="cardCvc" type="text" placeholder="cvc" required></p>
-                    -->
                     <p><input v-model="chBox" type="checkbox" required> Your personal data will be used to process your order, support your experience throughout this website, and for other purposes described in our "Privacy policy" and "terms and conditions".</p>
                     <button @click="orderFunc" type="submit">Place order</button>
                 </form>
@@ -77,7 +65,6 @@
 </template>
 <script>
 
-import Web3 from 'web3';
 
 export default {
     name:'CartTableCompo',
@@ -92,33 +79,17 @@ export default {
             discountPrice:0,
             mPoint:0,
             logedUser:'',
-            userBalance: 0,
             pointFlag:true,
             totalPoint:0,
             tmpPoint:0,
             addPoint:0,
             shipAddr:'',
             shipTel:'',
-            cardNum:'',
-            cardExp:'',
-            cardCvc:'',
             chBox:false,
             show: false
         }
     },
     methods:{
-        async loadUserBalance() {
-            try {
-                this.accounts = await this.web3.eth.getAccounts();
-                const userId = this.logedUser.id; // 로그인한 사용자의 ID를 가져옴
-                const balance = await this.web3.eth.getBalance(this.accounts[userId]); // 해당 인덱스의 이더리움 잔액 조회
-                this.userBalance = this.web3.utils.fromWei(balance, 'ether'); // 잔액을 ETH로 변환하여 저장
-            } 
-            catch (error) {
-            console.error('Error fetching ETH balance:', error);
-            }
-        },
-
         remItem(pid){
             // console.log(pid);
             this.totalPrice = 0;
@@ -140,11 +111,13 @@ export default {
             }
         },
         orderFunc(){
+            if (!this.chBox) {  // 체크박스가 체크되지 않았을 경우
+                alert("Please agree to the Privacy Policy and Terms and Conditions.");  // 경고 메시지를 표시합니다.
+                return;  // 함수 종료
+            }
+
             this.shipAddr='';
             this.shipTel='';
-            this.cardNum='';
-            this.cardExp='';
-            this.cardCvc='';
             this.chBox = false;
             this.logedUser.point -= this.mPoint;
             this.logedUser.point += this.addPoint;
@@ -154,6 +127,9 @@ export default {
             location.reload();
             this.show = true;
             return false;
+        },
+        goToProductsPage() {
+            this.$router.push({ name: 'products-page' });  // ProductsPage로 이동
         }
     },
     watch:{
@@ -173,9 +149,7 @@ export default {
             immediate:true,
         },
     },
-    async mounted(){
-        this.web3 = new Web3(new Web3.providers.HttpProvider('http://127.0.0.1:7545'));  // Ganache에 연결
-        await this.loadUserBalance();  // 로그인한 사용자의 잔액을 로드
+    mounted(){
         this.logedUser = JSON.parse(sessionStorage.getItem('logeduser'));
     }
 }
