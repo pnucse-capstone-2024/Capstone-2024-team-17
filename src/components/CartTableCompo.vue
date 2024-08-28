@@ -41,11 +41,10 @@
                 </ul>
                 <section>
                     <h3>SubTotal: {{this.subTotal.toFixed(2)}}<small>({{this.totalPrice.toFixed(2)}}(price) - {{this.discountPrice.toFixed(2)}}(discount) + {{this.tax.toFixed(2)}}(tax))</small></h3>
-                    <p style="margin-top: 20px;">
-                        Available ETH:
-                        <button @click="goToProductsPage">Check ETH on Products Page</button> </p>
+                    <p style="margin-top: 20px;">Available ETH: {{ userBalance }}</p>
                 </section>
-                <h2>-Total:{{this.tmpPrice.toFixed(2)}}<small>({{this.subTotal.toFixed(2)}} ETH)</small></h2>
+                <h2>-Total:{{this.tmpPrice.toFixed(2)}}<small>({{this.subTotal.toFixed(2)}}-{{this.mPoint}} Eths)</small></h2>
+                <small>Reward ETH: {{this.addPoint}}</small>
             </section>
             <section>
                 <h2>-Shipping Info</h2>
@@ -92,7 +91,7 @@ export default {
             web3: null,
             contract: null,
             accounts: [],
-            contractAddress: '0xCbDf659D4d7C091BD550C764f1cCd60b89FB9df6' // 스마트컨트랙트 배포할때마다 거래 주소를 바꿔줘야함.
+            contractAddress: '0x1B0892375850f8030a01aBc14767ED139543244b' // 스마트컨트랙트 배포할때마다 거래 주소를 바꿔줘야함.
         }
     },
     methods:{
