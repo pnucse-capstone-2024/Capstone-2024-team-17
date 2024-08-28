@@ -117,7 +117,7 @@ export default {
                 }
 
                 const balance = await this.web3.eth.getBalance(this.accounts[userId]);
-                this.userBalance = this.web3.utils.fromWei(balance, 'ether'); // 잔액을 ETH로 변환하여 저장
+                this.userBalance = parseFloat(this.web3.utils.fromWei(balance, 'ether')).toFixed(4); // 잔액을 ETH로 변환하여 소수점 4자리까지만 표시
             } catch (error) {
                 console.error('Error fetching ETH balance:', error.message);
             }
