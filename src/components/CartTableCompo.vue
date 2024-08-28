@@ -5,7 +5,7 @@
                 <tr>
                     <th>Product</th>
                     <th>Size</th>
-                    <th>-</th>
+                    <th>Hot/Cold</th>
                     <th>Type</th>
                     <th>Price</th>
                     <th>Amount</th>
@@ -48,7 +48,7 @@
             </section>
             <section>
                 <h2>-Shipping Info</h2>
-                <form @submit.prevent="orderFunc">
+                <form>
                     <label>Address: <input v-model="shipAddr" type="text" placeholder="Write address" required></label>
                     <label>Phone: <input v-model="shipTel" type="tel" placeholder="Write phone number" required></label>
                     <br/>
@@ -65,7 +65,7 @@
 <script>
 
 import Web3 from 'web3';
-import CoffeeContract from '../abi/CoffeeContract.json'; // ABI 기록 파일. 스마트컨트랙트 코드 바뀔때마다 갱신 필요.
+import CoffeeContract from '../abi/CoffeeContract.json';
 
 export default {
     name:'CartTableCompo',
@@ -80,18 +80,22 @@ export default {
             discountPrice:0,
             mPoint:0,
             logedUser:'',
+            userBalance: 0,
             pointFlag:true,
             totalPoint:0,
             tmpPoint:0,
             addPoint:0,
             shipAddr:'',
             shipTel:'',
+            cardNum:'',
+            cardExp:'',
+            cardCvc:'',
             chBox:false,
             show: false,
             web3: null,
             contract: null,
             accounts: [],
-            contractAddress: '0x1B0892375850f8030a01aBc14767ED139543244b' // 스마트컨트랙트 배포할때마다 거래 주소를 바꿔줘야함.
+            contractAddress: '0xCbDf659D4d7C091BD550C764f1cCd60b89FB9df6'
         }
     },
     methods:{
@@ -138,11 +142,15 @@ export default {
                 alert("Check your available points");
             }
         },
+
         async orderFunc(){
-            if (!this.chBox) {  // 체크박스가 체크되지 않았을 경우
-                alert("Please agree to the Privacy Policy and Terms and Conditions.");  // 경고 메시지를 표시합니다.
+
+            // 체크박스가 체크되어 있는지 확인
+            if (!this.chBox) {
+                // 체크되어 있지 않으면 경고 메시지를 표시하고 폼 제출을 막음
+                alert("Please agree to the terms and conditions.");
                 event.preventDefault(); // 폼 제출을 막음
-                return;  // 함수 종료
+                return;
             }
 
             try {
@@ -178,9 +186,6 @@ export default {
                 console.error('Transaction failed:', error);
                 alert(`There was an error processing your transaction: ${error.message}`);
             }
-        },
-        goToProductsPage() {
-            this.$router.push({ name: 'products-page' });  // ProductsPage로 이동
         }
     },
     watch:{
@@ -215,6 +220,7 @@ export default {
             await this.loadUserBalance();  // 로그인한 사용자의 잔액을 로드
         }
     }
+
 }
 </script>
 <style scoped>
