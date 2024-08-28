@@ -68,7 +68,7 @@ export default {
         if(this.selectedOption =="no"){
           alert("You have to choose all the options")
         }else{
-          let addCart = new productClass(this.CoffeeOptions.pId,this.CoffeeOptions.coffeeName,this.CoffeeOptions.price,"",this.selectedOption,"","","",this.amount)
+          let addCart = new productClass(this.CoffeeOptions.pId,this.CoffeeOptions.coffeeName,this.CoffeeOptions.price,"","",this.selectedOption,"","",this.amount)
           this.total = 0
           this.amount=1;
           this.selectedOption = "no"
