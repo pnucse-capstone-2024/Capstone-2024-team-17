@@ -11,10 +11,8 @@
                 <h3 v-show="memberstat">Membership: Full Member | ETH(Ξ): {{ userBalance }}</h3>
                 <h3 v-show="!memberstat">Membership: None</h3>
               </article>
-              <article v-if="memberstat === false">
-                <h2>Welcome {{ fullName }}</h2>
-                <h3 v-show="!memberstat">Membership: None</h3>
-                <button class="joinMember" @click="join()">Join the Membership</button>
+              <article v-if="isManager">
+                <button class="manageProduct" @click="manageProduct()">Manage your product</button>
               </article>
               <h2>Products Page</h2>
               <div class="coffeePage">
@@ -64,6 +62,7 @@
         userBalance: 0,
         web3: null,
         accounts: [],
+        isManager: false,
       };
     },
     methods: {
@@ -104,7 +103,7 @@
           name: 'cart-page',
         });
       },
-      join() {
+      manageProduct() {
         this.$router.push({ name: 'member-ship' });
       },
     },
@@ -116,6 +115,9 @@
       if (sessionStorage.getItem('logeduser')) {
         this.fullName = this.logedUser.first_name + ' ' + this.logedUser.last_name;
         this.memberstat = this.logedUser.membership;
+        this.isManager = this.logedUser.manager;
+
+        // console.log('isManager:', this.isManager);
       }
     },
   };
@@ -163,7 +165,7 @@ h3{
     z-index: 2;
 }
 
-.joinMember{
+.manageProduct{
     padding: 1%;
     font-weight: 700;
     border-radius: 8px;
