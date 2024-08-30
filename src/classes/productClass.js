@@ -20,109 +20,65 @@ export class productClass{
         this.amount = amount;
     }
 
-    discount(){
+    discount(amount, fee) {
         let Price = this.price; //0
-        if(this.type !== "Beverage"){
-            if(this.amount <= 4){
-                Price = 0
-            }else if(this.amount > 4 && this.amount <=9){
-                Price = (this.price + this.type) * 0.05
-            }else if(this.amount > 9){
-                Price = (this.price + this.type) * 0.10
-            }
-        }else{
+        
+        if(amount <= 4) {
             Price = 0
         }
+        else if(amount > 4 && amount <=9) {
+            Price = (this.price + fee) * 0.05
+        }
+        else if(amount > 9) {
+            Price = (this.price + fee) * 0.10
+        }
+        
         let discount = (Price * this.amount).toFixed(2)
         return discount
     }
 
-
-    totalCal(){
-        let Price = this.price; //0
-
-        let optionFee = 0
-        let bTypeFee = 0
-        let bSizeFee = 0
-        if(this.type == "Beverage"){
-            optionFee = 0;
-            if(this.bType == "Esspresso"){
-                bTypeFee = 0
-            }else if(this.bType == "Americano"){
-                bTypeFee = 0
-            }else if(this.bType == "Black"){
-                bTypeFee = -0.5
-            }else if(this.bType == "Latte"){
-                bTypeFee = 1
-            }else if(this.bType == "Caramel Latte"){
-                bTypeFee = 2
-            }else if(this.bType == "Caramel Moch"){
-                bTypeFee = 2
-            }
-
-            if(this.bSize == "Small"){
-                bSizeFee = 0
-            }else if(this.bSize == "Large"){
-                bSizeFee = 1
-            }else if(this.bSize == "Very Large"){
-                bSizeFee = 2
-            }
-        }else if(this.type == 0){
-            optionFee = 0;
-        }else if(this.type == 1){
-            optionFee = 1;
-        }else if(this.type == 3){
-            optionFee = 3;
-        }else if(this.type == 2){
-            optionFee = 2;
-        }
-
-        let Final = ((Price + optionFee + bTypeFee + bSizeFee) * this.amount).toFixed(2);
-
-        return Final
-    }
-
-    eachPrice(){
+    eachPrice(fee) {
         let Price = this.price;
-
         let optionFee = 0
-        let bTypeFee = 0
-        let bSizeFee = 0
-        if(this.type == "Beverage"){
+    
+        if(fee == 0) {
             optionFee = 0;
-            if(this.bType == "Esspresso"){
-                bTypeFee = 0
-            }else if(this.bType == "Americano"){
-                bTypeFee = 0
-            }else if(this.bType == "Black"){
-                bTypeFee = -0.5
-            }else if(this.bType == "Latte"){
-                bTypeFee = 1
-            }else if(this.bType == "Caramel Latte"){
-                bTypeFee = 2
-            }else if(this.bType == "Caramel Moch"){
-                bTypeFee = 2
-            }
-
-            if(this.bSize == "Small"){
-                bSizeFee = 0
-            }else if(this.bSize == "Large"){
-                bSizeFee = 1
-            }else if(this.bSize == "Very Large"){
-                bSizeFee = 2
-            }
-        }else if(this.type == 0){
-            optionFee = 0;
-        }else if(this.type == 1){
+        }
+        else if(fee == 1) {
             optionFee = 1;
-        }else if(this.type == 3){
-            optionFee = 3;
-        }else if(this.type == 2){
+        } 
+        else if(fee == 2) {
             optionFee = 2;
+        } 
+        else if(fee == 3) {
+            optionFee = 3;
         }
 
-        let Final = (Price + optionFee + bTypeFee + bSizeFee).toFixed(2);
+        let Final = (Price + optionFee).toFixed(2);
 
         return Final
     }
+    
+    totalCal(fee){
+        let Price = this.price; //0
+        let optionFee = 0
+        
+        if(fee == 0) {
+            optionFee = 0;
+        } 
+        else if(fee == 1) {
+            optionFee = 1;
+        }
+        else if(fee == 2) {
+            optionFee = 2;
+        }
+        else if(fee == 3) {
+            optionFee = 3;
+        }
+
+        let Final = ((Price + optionFee) * this.amount).toFixed(2);
+
+        return Final
+    }
+
 }

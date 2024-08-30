@@ -21,9 +21,9 @@
                     <td v-if="coffee[1].bTemp !== ''">{{coffee[1].bTemp}}</td>
                     <td v-if="coffee[1].bTemp === ''">-</td>
                     <td v-if="coffee[1].bType !== ''">{{getBeanType(coffee[1].bType)}}</td>
-                    <td>{{coffee[1].eachPrice()}}</td>
+                    <td>{{coffee[1].eachPrice(coffee[1].bType)}}</td>
                     <td>{{coffee[1].amount}}</td>
-                    <td>{{coffee[1].totalCal()}}</td>
+                    <td>{{coffee[1].totalCal(coffee[1].bType)}}</td>
                     <td><button @click="remItem(coffee[1].pId)">x</button></td>
                 </tr>
             </tbody>
@@ -39,7 +39,7 @@
                     </li>
                 </ul>
                 <section>
-                    <h3 style="margin-top: 40px;">Total: {{this.subTotal.toFixed(2)}}<small>({{this.totalPrice.toFixed(2)}}(price) - {{this.discountPrice.toFixed(2)}}(discount) + {{this.tax.toFixed(2)}}(tax))</small></h3>
+                    <h3 style="margin-top: 40px;">Total: {{this.subTotal.toFixed(2)}}<small>({{this.totalPrice.toFixed(2)}}(price) - {{this.discountPrice.toFixed(2)}}(discount) + {{this.commision.toFixed(2)}}(commision))</small></h3>
                     <p style="margin-top: 60px;">Available ETH: {{ userBalance }}</p>
                 </section>
                 <h2></h2>
@@ -73,8 +73,7 @@ export default {
             coffeeItems:this.cartList,
             subTotal:0,
             totalPrice:0,
-            tmpPrice:0,
-            tax:0,
+            commision:0,
             discountPrice:0,
             mPoint:0,
             logedUser:'',
@@ -110,7 +109,7 @@ export default {
                     return "-";
             }
         },
-
+        
         async loadUserBalance() {
             try {
                 this.accounts = await this.web3.eth.getAccounts();
@@ -145,15 +144,7 @@ export default {
                 name:'products-page'
             })
         },
-        usePoint(){
-            this.totalPoint = this.userBalance;
-            this.tmpPrice = this.subTotal;
-            if(this.mPoint < this.totalPoint && 0 < (this.tmpPrice - this.mPoint) ){
-                this.tmpPrice -= this.mPoint;
-            }else{
-                alert("Check your available points");
-            }
-        },
+
 
         async orderFunc(){
 
@@ -204,12 +195,11 @@ export default {
         coffeeItems:{
             handler(){
                 this.coffeeItems.forEach((value)=>{
-                    this.totalPrice += (value.eachPrice() * value.amount);
-                    this.discountPrice += parseFloat(value.discount());
+                    this.totalPrice += parseFloat(value.totalCal(value.bType));
+                    this.discountPrice += parseFloat(value.discount(value.amount, value.bType));
                 })
-                this.tax = (this.totalPrice - this.discountPrice)*0.05;
-                this.tmpPrice = this.totalPrice - this.discountPrice + this.tax;
-                this.subTotal = this.totalPrice - this.discountPrice + this.tax;
+                this.commision = (this.totalPrice - this.discountPrice)*0.30;
+                this.subTotal = this.totalPrice - this.discountPrice + this.commision;
             },
             deep:true,
             immediate:true,

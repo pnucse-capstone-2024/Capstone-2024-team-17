@@ -5,15 +5,17 @@ export class userClass{
     username;
     email;
     membership;
+    seller;
     manager;
 
-    constructor(id, first_name, last_name, username, email, member, manager){
+    constructor(id, first_name, last_name, username, email, member, seller, manager){
         this.id = id;
         this.first_name = first_name;
         this.last_name = last_name;
         this.username = username;
         this.email = email;
         this.membership = member;
+        this.seller = seller;
         this.manager = manager;
     }
 
@@ -25,6 +27,7 @@ export class userClass{
             username: this.username,
             email: this.email,
             membership: this.membership,
+            seller: this.seller,
             manager: this.manager
         }
     }

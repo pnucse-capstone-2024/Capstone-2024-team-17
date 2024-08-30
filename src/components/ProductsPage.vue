@@ -11,7 +11,7 @@
                 <h3 v-show="memberstat">Membership: Full Member | ETH(Ξ): {{ userBalance }}</h3>
                 <h3 v-show="!memberstat">Membership: None</h3>
               </article>
-              <article v-if="isManager">
+              <article v-if="isSeller">
                 <button class="manageProduct" @click="manageProduct()">Manage your product</button>
               </article>
               <h2>Products Page</h2>
@@ -62,7 +62,7 @@
         userBalance: 0,
         web3: null,
         accounts: [],
-        isManager: false,
+        isSeller: false,
       };
     },
     methods: {
@@ -115,9 +115,9 @@
       if (sessionStorage.getItem('logeduser')) {
         this.fullName = this.logedUser.first_name + ' ' + this.logedUser.last_name;
         this.memberstat = this.logedUser.membership;
-        this.isManager = this.logedUser.manager;
+        this.isSeller = this.logedUser.seller;
 
-        // console.log('isManager:', this.isManager);
+        // console.log('isSeller:', this.isSeller);
       }
     },
   };
