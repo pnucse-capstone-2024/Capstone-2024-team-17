@@ -10,6 +10,8 @@
             <li><router-link to='/membership'>Membership</router-link></li>
             <li><router-link to='/shoppingcart'>Shopping Cart</router-link></li>
             <li><router-link to='/shippinginfo'>Shipping Info</router-link></li>
+
+            <li v-if="isManager"><router-link to='/admindashboard'>Admin Dashboard</router-link></li>
         </ul>
         <ul v-else>
             <li><router-link v-show="!user" to='/login'>Login</router-link></li>
@@ -39,7 +41,8 @@ export default {
         return {
             logedUser: JSON.parse(sessionStorage.getItem('logeduser')),
             displayName: '',
-            sesssionCheck: false
+            sesssionCheck: false,
+            isManager: false
         };
     },
     methods: {
@@ -56,6 +59,7 @@ export default {
         if (this.logedUser) {
             this.displayName = this.logedUser.first_name;
             this.sesssionCheck = true;
+            this.isManager = this.logedUser.manager;
         }
     }
 };
