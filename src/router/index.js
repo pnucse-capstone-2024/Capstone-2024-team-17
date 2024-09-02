@@ -7,6 +7,8 @@ import ShoppingCart from '../components/CartPage.vue'
 import MemberShip from '../components/MembershipPage.vue'
 import PagenotFound from '../components/PagenotFound.vue'
 import ShippingInfoCompo from '../components/ShippingInfoCompo.vue'
+import AdminDashboard from '../components/AdminDashboard.vue'
+
 const routes = [
     {
         path: '/',
@@ -43,6 +45,11 @@ const routes = [
         path: '/shippinginfo',
         name: 'shippinginfo-compo', 
         component: ShippingInfoCompo 
+    },
+    {
+        path: '/admindashboard',
+        name: 'admin-dashboard',
+        component: AdminDashboard
     },
     {
         path: '/:pathMatch(.*)*',

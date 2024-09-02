@@ -14,7 +14,7 @@
                     </section>
                     <section>
                          <h2>Important</h2>
-                            <p>If you purchase more than 500g, you get 5% discount <br/>/ more than 1kg, 10% discount</p>
+                            <p>If you purchase more than 500g of a product, you get 5% discount <br/>/ more than 1kg, 10% discount</p>
                             <hr/>
                             <p>Coffee beans Type:
                                 <br/>

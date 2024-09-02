@@ -4,8 +4,8 @@
             <thead v-if="this.coffeeItems.size!=0">
                 <tr>
                     <th>Product</th>
-                    <th>Size</th>
-                    <th>Hot/Cold</th>
+                    <th>-</th>
+                    <th>-</th>
                     <th>Type</th>
                     <th>Price</th>
                     <th>Amount</th>
@@ -20,18 +20,17 @@
                     <td v-if="coffee[1].bSize === ''">-</td>
                     <td v-if="coffee[1].bTemp !== ''">{{coffee[1].bTemp}}</td>
                     <td v-if="coffee[1].bTemp === ''">-</td>
-                    <td v-if="coffee[1].bType!== ''">{{coffee[1].bType}}</td>
-                    <td v-if="coffee[1].bType === ''">-</td>
-                    <td>{{coffee[1].eachPrice()}}</td>
+                    <td v-if="coffee[1].bType !== ''">{{getBeanType(coffee[1].bType)}}</td>
+                    <td>{{coffee[1].eachPrice(coffee[1].bType)}}</td>
                     <td>{{coffee[1].amount}}</td>
-                    <td>{{coffee[1].totalCal()}}</td>
+                    <td>{{coffee[1].totalCal(coffee[1].bType)}}</td>
                     <td><button @click="remItem(coffee[1].pId)">x</button></td>
                 </tr>
             </tbody>
         </table>
         <article>
             <article>
-                <h2 style="margin-top: 40px; margin-left: -5%;">Order Details</h2>
+                <h2 style="margin-top: 40px; margin-left: -6%;">Order Details</h2>
             </article>
             <section>
                 <ul v-for="(coffee,idx) in coffeeItems" :key="idx">
@@ -40,14 +39,13 @@
                     </li>
                 </ul>
                 <section>
-                    <h3>SubTotal: {{this.subTotal.toFixed(2)}}<small>({{this.totalPrice.toFixed(2)}}(price) - {{this.discountPrice.toFixed(2)}}(discount) + {{this.tax.toFixed(2)}}(tax))</small></h3>
-                    <p style="margin-top: 20px;">Available ETH: {{ userBalance }}</p>
+                    <h3 style="margin-top: 40px;">Total: {{this.subTotal.toFixed(2)}}<small>({{this.totalPrice.toFixed(2)}}(price) - {{this.discountPrice.toFixed(2)}}(discount) + {{this.commision.toFixed(2)}}(commision))</small></h3>
+                    <p style="margin-top: 60px;">Available ETH: {{ userBalance }}</p>
                 </section>
-                <h2>-Total:{{this.tmpPrice.toFixed(2)}}<small>({{this.subTotal.toFixed(2)}}-{{this.mPoint}} Eths)</small></h2>
-                <small>Reward ETH: {{this.addPoint}}</small>
+                <h2></h2>
             </section>
             <section>
-                <h2>-Shipping Info</h2>
+                <h2 style="margin-top: 60px; margin-left: 0%;">-Shipping Info</h2>
                 <form>
                     <label>Address: <input v-model="shipAddr" type="text" placeholder="Write address" required></label>
                     <label>Phone: <input v-model="shipTel" type="tel" placeholder="Write phone number" required></label>
@@ -75,8 +73,7 @@ export default {
             coffeeItems:this.cartList,
             subTotal:0,
             totalPrice:0,
-            tmpPrice:0,
-            tax:0,
+            commision:0,
             discountPrice:0,
             mPoint:0,
             logedUser:'',
@@ -84,7 +81,6 @@ export default {
             pointFlag:true,
             totalPoint:0,
             tmpPoint:0,
-            addPoint:0,
             shipAddr:'',
             shipTel:'',
             cardNum:'',
@@ -99,6 +95,21 @@ export default {
         }
     },
     methods:{
+        getBeanType(fee) {
+            switch (fee) {
+                case 0:
+                    return "Whole beans";
+                case 1:
+                    return "Ground";
+                case 2:
+                    return "Drip Package";
+                case 3:
+                    return "Capsule";
+                default:
+                    return "-";
+            }
+        },
+        
         async loadUserBalance() {
             try {
                 this.accounts = await this.web3.eth.getAccounts();
@@ -133,15 +144,7 @@ export default {
                 name:'products-page'
             })
         },
-        usePoint(){
-            this.totalPoint = this.userBalance;
-            this.tmpPrice = this.subTotal;
-            if(this.mPoint < this.totalPoint && 0 < (this.tmpPrice - this.mPoint) ){
-                this.tmpPrice -= this.mPoint;
-            }else{
-                alert("Check your available points");
-            }
-        },
+
 
         async orderFunc(){
 
@@ -191,15 +194,12 @@ export default {
     watch:{
         coffeeItems:{
             handler(){
-                this.addPoint = 0;
                 this.coffeeItems.forEach((value)=>{
-                    this.totalPrice += (value.eachPrice() * value.amount);
-                    this.discountPrice += parseFloat(value.discount());
+                    this.totalPrice += parseFloat(value.totalCal(value.bType));
+                    this.discountPrice += parseFloat(value.discount(value.amount, value.bType));
                 })
-                this.tax = (this.totalPrice - this.discountPrice)*0.05;
-                this.tmpPrice = this.totalPrice - this.discountPrice + this.tax;
-                this.subTotal = this.totalPrice - this.discountPrice + this.tax;
-                this.addPoint = parseInt(this.tmpPrice * 0.05);
+                this.commision = (this.totalPrice - this.discountPrice)*0.30;
+                this.subTotal = this.totalPrice - this.discountPrice + this.commision;
             },
             deep:true,
             immediate:true,
