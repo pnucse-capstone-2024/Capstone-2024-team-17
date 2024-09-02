@@ -71,7 +71,7 @@
           this.accounts = await this.web3.eth.getAccounts();
           const userId = this.logedUser.id;  // 로그인한 사용자의 ID를 가져옴
           const balance = await this.web3.eth.getBalance(this.accounts[userId]);  // 해당 인덱스의 이더리움 잔액 조회
-          this.userBalance = parseFloat(this.web3.utils.fromWei(balance, 'ether')).toFixed(4); // 잔액을 ETH로 변환하여 저장
+          this.userBalance = parseFloat(this.web3.utils.fromWei(balance, 'ether')).toFixed(2); // 잔액을 ETH로 변환하여 저장
         } catch (error) {
           console.error('Error fetching ETH balance:', error);
         }
