@@ -83,15 +83,12 @@ export default {
             tmpPoint:0,
             shipAddr:'',
             shipTel:'',
-            cardNum:'',
-            cardExp:'',
-            cardCvc:'',
             chBox:false,
             show: false,
             web3: null,
             contract: null,
             accounts: [],
-            contractAddress: '0xCbDf659D4d7C091BD550C764f1cCd60b89FB9df6'
+            contractAddress: '0xa6A96Be3f5CbBCa1Edf1533c8A3e3b61A2b1a2eD'
         }
     },
     methods:{
@@ -128,7 +125,7 @@ export default {
                 }
 
                 const balance = await this.web3.eth.getBalance(this.accounts[userId]);
-                this.userBalance = parseFloat(this.web3.utils.fromWei(balance, 'ether')).toFixed(4); // 잔액을 ETH로 변환하여 소수점 4자리까지만 표시
+                this.userBalance = parseFloat(this.web3.utils.fromWei(balance, 'ether')).toFixed(2); // 잔액을 ETH로 변환하여 소수점 4자리까지만 표시
             } catch (error) {
                 console.error('Error fetching ETH balance:', error.message);
             }
@@ -146,50 +143,105 @@ export default {
         },
 
 
-        async orderFunc(){
-
-            // 체크박스가 체크되어 있는지 확인
-            if (!this.chBox) {
-                // 체크되어 있지 않으면 경고 메시지를 표시하고 폼 제출을 막음
-                alert("Please agree to the terms and conditions.");
-                event.preventDefault(); // 폼 제출을 막음
-                return;
-            }
-
-            try {
-                for (let [coffeeId, coffee] of this.coffeeItems.entries()) {
-                    const quantity = coffee.amount;
-                    const coffeeIndex = parseInt(coffeeId); // coffeeId를 정수로 변환
-                    const totalPrice = coffee.totalCal(); // 총 가격 계산 (ETH로)
-
-                    await this.contract.methods.purchaseCoffee(coffeeIndex, quantity).send({
-                        from: this.accounts[this.logedUser.id],
-                        value: this.web3.utils.toWei(totalPrice.toString(), 'ether'),
-                    });
-
-                    console.log(`Purchased ${quantity} units of coffee with ID ${coffeeIndex}.`);
-                }
-
-                // 주문 완료 후 처리
-                this.shipAddr = '';
-                this.shipTel = '';
-                this.cardNum = '';
-                this.cardExp = '';
-                this.cardCvc = '';
-                this.chBox = false;
-                this.logedUser.point -= this.mPoint;
-                this.logedUser.point += this.addPoint;
-                this.mPoint = 0;
-                sessionStorage.setItem('logeduser', JSON.stringify(this.logedUser));
-                localStorage.clear();
-                location.reload();
-                this.show = true;
-
-            } catch (error) {
-                console.error('Transaction failed:', error);
-                alert(`There was an error processing your transaction: ${error.message}`);
-            }
+    async orderFunc() {
+    // 체크박스가 체크되어 있는지 확인
+        if (!this.chBox) {
+            alert("Please agree to the terms and conditions.");
+            event.preventDefault();
+            return;
         }
+
+        try {
+            // 각 커피 항목에 대해 트랜잭션 수행
+            for (let [coffeeId, coffee] of this.coffeeItems.entries()) {
+            const quantity = coffee.amount;
+            const coffeeIndex = parseInt(coffeeId);
+            const totalUnitPrice = coffee.totalCal(coffee.bType); // 총 가격 계산 (ETH로)
+            const totalUnitPriceWei = this.web3.utils.toWei(totalUnitPrice.toString(), 'ether');
+
+            // coffeeId에 따른 판매자 주소 결정
+            let toAddress = '';
+            switch (coffeeIndex) {
+                case 0:
+                    toAddress = '0x17c317173BD04D08C507Ee30DAD391988a6b9D6C';
+                    break;
+                case 1:
+                    toAddress = '0x42FD0ab02A2749cdEABB6918b43b474e3612A3ea';
+                    break;
+                case 2:
+                    toAddress = '0x9aa2AAd79C3C659282041089137895662c6252Dc';
+                    break;
+                case 3:
+                    toAddress = '0xa5CaC98d194603a11ce895BC9F10667A7434f8E2';
+                    break;
+                case 4:
+                    toAddress = '0x8a028F059e8633B37Bad57d5Da66b2eCdDf7f044';
+                    break;
+                case 5:
+                    toAddress = '0xE0641e51c20BdBECAE99783Fec963BC4c0374841';
+                    break;
+                case 6:
+                    toAddress = '0x75DC5748c40Ac457992914F5aCbAB18e62EBAC90';
+                    break;
+                case 7:
+                    toAddress = '0x2126b3439340D30715275e7853DA75ea3c0Ed6Ff';
+                    break;
+                case 8:
+                    toAddress = '0xBcaaA6d7935ADA652d89B0383dC6AfC51E7169a6';
+                    break;
+                case 9:
+                    toAddress = '0x05e92401E71f0FE02e97262dd4d10f9b324c9659';
+                    break;
+                case 10:
+                    toAddress = '0xAEA5F25890d7a19558C91929e68caB7D50527BF4';
+                    break;
+                case 11:
+                    toAddress = '0x49B1E2b0CC923c8A437c952CF789Dbd7B3fcca6c';
+                    break;
+                default:
+                    console.error(`Invalid coffeeId: ${coffeeId}`);
+                    continue;
+            }
+
+            // 트랜잭션 발생
+            await this.contract.methods.purchaseCoffee(coffeeIndex, quantity).send({
+                from: this.accounts[this.logedUser.id],
+                to: toAddress,  // 각 coffeeId에 맞는 주소로 송금
+                value: totalUnitPriceWei,
+            });
+
+            console.log(`Purchased ${quantity} units of coffee with ID ${coffeeIndex}, sent to ${toAddress}.`);
+        }
+
+            // 주문 완료 후 커미션 차감
+            const commissionWei = this.web3.utils.toWei(this.commision.toString(), 'ether');
+            await this.web3.eth.sendTransaction({
+                from: this.accounts[this.logedUser.id],
+                to: '0x9dbc4c4B6C5Ef959e72B95dC3b86157cA8a90ec7',  // 커미션을 받을 계정 주소
+                value: commissionWei,
+            });
+
+            console.log(`Commission of ${this.commision} ETH sent to contract.`);
+
+            // 주문 완료 후 처리
+            this.shipAddr = '';
+            this.shipTel = '';
+            this.chBox = false;
+            this.logedUser.point -= this.mPoint;
+            this.logedUser.point += this.addPoint;
+            this.mPoint = 0;
+            sessionStorage.setItem('logeduser', JSON.stringify(this.logedUser));
+            localStorage.clear();
+            location.reload();
+            this.show = true;
+
+        }
+        catch (error) {
+            console.error('Transaction failed:', error);
+            alert(`There was an error processing your transaction: ${error.message}`);
+        }
+    }
+
     },
     watch:{
         coffeeItems:{
