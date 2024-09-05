@@ -104,7 +104,7 @@
         });
       },
       manageProduct() {
-        this.$router.push({ name: 'member-ship' });
+        this.$router.push({ name: 'manage-product' });
       },
     },
     async mounted() {
