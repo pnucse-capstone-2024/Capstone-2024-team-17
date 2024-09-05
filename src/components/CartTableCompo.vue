@@ -63,7 +63,7 @@
 <script>
 
 import Web3 from 'web3';
-import CoffeeContract from '../abi/CoffeeContract.json';
+import CoffeeContract from '../abi/PaymentContract.json';
 
 export default {
     name:'CartTableCompo',
