@@ -88,7 +88,7 @@ export default {
             web3: null,
             contract: null,
             accounts: [],
-            contractAddress: '0xCbDf659D4d7C091BD550C764f1cCd60b89FB9df6'
+            contractAddress: '0xa6A96Be3f5CbBCa1Edf1533c8A3e3b61A2b1a2eD'
         }
     },
     methods:{
@@ -154,25 +154,70 @@ export default {
         try {
             // 각 커피 항목에 대해 트랜잭션 수행
             for (let [coffeeId, coffee] of this.coffeeItems.entries()) {
-                const quantity = coffee.amount;
-                const coffeeIndex = parseInt(coffeeId);
-                const totalUnitPrice = coffee.totalCal(coffee.bType); // 총 가격 계산 (ETH로)
-                const totalUnitPriceWei = this.web3.utils.toWei(totalUnitPrice.toString(), 'ether');
+            const quantity = coffee.amount;
+            const coffeeIndex = parseInt(coffeeId);
+            const totalUnitPrice = coffee.totalCal(coffee.bType); // 총 가격 계산 (ETH로)
+            const totalUnitPriceWei = this.web3.utils.toWei(totalUnitPrice.toString(), 'ether');
 
-                // 트랜잭션 발생
-                await this.contract.methods.purchaseCoffee(coffeeIndex, quantity).send({
-                    from: this.accounts[this.logedUser.id],
-                    value: totalUnitPriceWei,
-                });
-
-                console.log(`Purchased ${quantity} units of coffee with ID ${coffeeIndex}.`);
+            // coffeeId에 따른 판매자 주소 결정
+            let toAddress = '';
+            switch (coffeeIndex) {
+                case 0:
+                    toAddress = '0x17c317173BD04D08C507Ee30DAD391988a6b9D6C';
+                    break;
+                case 1:
+                    toAddress = '0x42FD0ab02A2749cdEABB6918b43b474e3612A3ea';
+                    break;
+                case 2:
+                    toAddress = '0x9aa2AAd79C3C659282041089137895662c6252Dc';
+                    break;
+                case 3:
+                    toAddress = '0xa5CaC98d194603a11ce895BC9F10667A7434f8E2';
+                    break;
+                case 4:
+                    toAddress = '0x8a028F059e8633B37Bad57d5Da66b2eCdDf7f044';
+                    break;
+                case 5:
+                    toAddress = '0xE0641e51c20BdBECAE99783Fec963BC4c0374841';
+                    break;
+                case 6:
+                    toAddress = '0x75DC5748c40Ac457992914F5aCbAB18e62EBAC90';
+                    break;
+                case 7:
+                    toAddress = '0x2126b3439340D30715275e7853DA75ea3c0Ed6Ff';
+                    break;
+                case 8:
+                    toAddress = '0xBcaaA6d7935ADA652d89B0383dC6AfC51E7169a6';
+                    break;
+                case 9:
+                    toAddress = '0x05e92401E71f0FE02e97262dd4d10f9b324c9659';
+                    break;
+                case 10:
+                    toAddress = '0xAEA5F25890d7a19558C91929e68caB7D50527BF4';
+                    break;
+                case 11:
+                    toAddress = '0x49B1E2b0CC923c8A437c952CF789Dbd7B3fcca6c';
+                    break;
+                default:
+                    console.error(`Invalid coffeeId: ${coffeeId}`);
+                    continue;
             }
+
+            // 트랜잭션 발생
+            await this.contract.methods.purchaseCoffee(coffeeIndex, quantity).send({
+                from: this.accounts[this.logedUser.id],
+                to: toAddress,  // 각 coffeeId에 맞는 주소로 송금
+                value: totalUnitPriceWei,
+            });
+
+            console.log(`Purchased ${quantity} units of coffee with ID ${coffeeIndex}, sent to ${toAddress}.`);
+        }
 
             // 주문 완료 후 커미션 차감
             const commissionWei = this.web3.utils.toWei(this.commision.toString(), 'ether');
             await this.web3.eth.sendTransaction({
                 from: this.accounts[this.logedUser.id],
-                to: this.contractAddress,  // 커미션을 받을 계정 주소
+                to: '0x9dbc4c4B6C5Ef959e72B95dC3b86157cA8a90ec7',  // 커미션을 받을 계정 주소
                 value: commissionWei,
             });
 
