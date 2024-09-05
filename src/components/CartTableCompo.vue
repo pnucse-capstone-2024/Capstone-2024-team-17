@@ -172,7 +172,8 @@ export default {
             const commissionWei = this.web3.utils.toWei(this.commision.toString(), 'ether');
             await this.web3.eth.sendTransaction({
                 from: this.accounts[this.logedUser.id],
-                to: this.contractAddress,  // 커미션을 받을 계정 주소
+                // 커미션을 받을 계정 주소 to: this.contractAddress,
+                to: '0xE860132058426bd858f2F3dFd17DA1A09561973b',  
                 value: commissionWei,
             });
 

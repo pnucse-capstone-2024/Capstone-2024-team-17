@@ -7,6 +7,7 @@
           </header>
 
           <section class="modal-body">
+              <aside class="coffeeImg">Coffee</aside>
               <div class="bodytest" name="body">
                   <h2>{{ coffeeName }}</h2>
                   <div class="modal_main">
@@ -59,7 +60,7 @@ export default {
         this.$emit('saveProduction', { pId: this.selectedCoffee, quantity: this.productionQty });
         this.close();
       } else {
-        alert("Please select a coffee and enter a valid production quantity.");
+        alert("Please select a coffee type and enter a valid production quantity.");
       }
     },
     loadJson(){
@@ -141,6 +142,22 @@ export default {
 }
 .modal_main{
   display: flex;
+}
+.coffeeImg{
+  width: 100%;
+  height: 200px;
+  border-radius: 10px;
+  font-size: 40px;
+  font-weight: 700;
+  padding-bottom: 2%;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  background-image: url(../../public/img/pexels-jessica-lewis-creative-867466.jpg);
+  background-position: center;
+  background-size: cover;
 }
 .right{
   display: flex;
