@@ -1,21 +1,18 @@
 <template>
-    <!-- 여기에 HTML 템플릿을 작성하세요 -->
     <div>
-      <h1>Hello, World!</h1>
+        <h1>Hello, World!</h1>
     </div>
-  </template>
+</template>
   
-  <script>
-  export default {
+<script>
+export default {
     name: 'AdminDashboard',
-    // 여기에 JavaScript 코드를 작성하세요
-  }
-  </script>
+    }
+</script>
   
-  <style scoped>
-  /* 여기에 스타일을 추가하세요 */
+<style scoped>
   h1 {
-    color: blue;
+    color: goldenrod;
   }
-  </style>
+</style>
   
