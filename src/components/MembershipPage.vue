@@ -7,7 +7,7 @@
                 <h2>Membership Joining Page</h2>  
                 <section>
                     <article>
-                        <p>Come join us in this coffee adventure</p>
+                        <p>Come join us in this blockchain coffee adventure</p>
                         <small>Benefits everywhere!</small>
                     </article>    
                         <button class='join' @click="joinMember">Join</button>

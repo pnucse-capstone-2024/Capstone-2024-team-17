@@ -19,9 +19,9 @@
                             <p>Coffee beans Type:
                                 <br/>
                           <br/>-Whole bean: (no extra charge).
-                          <br/>-Ground: ($1 extra charge per 100g).
-                          <br/>-Drip Package: ($2 extra charge per 100g).
-                          <br/>-Capsule: ($3 extra charge per 100g).
+                          <br/>-Ground: (Ξ 1 extra charge per 100g).
+                          <br/>-Drip Package: (Ξ 2 extra charge per 100g).
+                          <br/>-Capsule: (Ξ 3 extra charge per 100g).
                             </p>
                     </section>
                 </div>                                           

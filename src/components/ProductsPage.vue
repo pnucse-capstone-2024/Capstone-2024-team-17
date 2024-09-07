@@ -12,7 +12,7 @@
                 <h3 v-show="!memberstat">Membership: None</h3>
               </article>
               <article v-if="isSeller">
-                <button class="manageProduct" @click="manageProduct()">Manage your product</button>
+                <button class="manageProduct" @click="manageProduct()">Manage my product</button>
               </article>
               <h2>Products Page</h2>
               <div class="coffeePage">
@@ -88,9 +88,15 @@
           });
       },
       showModal(val) {
-        this.isModalVisible = true;
-        let coffeeOject = new productClass(val.pId, val.coffeeName, val.price, val.description, '', '', '', 1);
-        this.getProduct = coffeeOject;
+        const managedCoffeeId = this.logedUser.id - 10;
+        if (val.pId === managedCoffeeId) {
+          alert("You cannot purchase your own coffee beans.");
+        }
+        else {
+          this.isModalVisible = true;
+          let coffeeOject = new productClass(val.pId, val.coffeeName, val.price, val.description, '', '', '', 1);
+          this.getProduct = coffeeOject;
+        }
       },
       closeModal() {
         this.isModalVisible = false;

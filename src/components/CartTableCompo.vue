@@ -4,8 +4,8 @@
             <thead v-if="this.coffeeItems.size!=0">
                 <tr>
                     <th>Product</th>
-                    <th>-</th>
-                    <th>-</th>
+                    <th>Origin</th>
+                    <th>P-day</th>
                     <th>Type</th>
                     <th>Price</th>
                     <th>Amount</th>
@@ -77,6 +77,7 @@ export default {
             discountPrice:0,
             mPoint:0,
             logedUser:'',
+            loggedUser: JSON.parse(sessionStorage.getItem('logeduser')),
             userBalance: 0,
             pointFlag:true,
             totalPoint:0,
@@ -154,80 +155,78 @@ export default {
         try {
             // 각 커피 항목에 대해 트랜잭션 수행
             for (let [coffeeId, coffee] of this.coffeeItems.entries()) {
-            const quantity = coffee.amount;
-            const coffeeIndex = parseInt(coffeeId);
-            const totalUnitPrice = coffee.totalCal(coffee.bType); // 총 가격 계산 (ETH로)
-            const totalUnitPriceWei = this.web3.utils.toWei(totalUnitPrice.toString(), 'ether');
+                const quantity = coffee.amount;
+                const coffeeIndex = parseInt(coffeeId);
+                const totalUnitPrice = coffee.totalCal(coffee.bType); // 총 가격 계산 (ETH로)
+                const totalUnitPriceWei = this.web3.utils.toWei(totalUnitPrice.toString(), 'ether');
 
-            // coffeeId에 따른 판매자 주소 결정
-            let toAddress = '';
-            switch (coffeeIndex) {
-                case 0:
-                    toAddress = '0x17c317173BD04D08C507Ee30DAD391988a6b9D6C';
-                    break;
-                case 1:
-                    toAddress = '0x42FD0ab02A2749cdEABB6918b43b474e3612A3ea';
-                    break;
-                case 2:
-                    toAddress = '0x9aa2AAd79C3C659282041089137895662c6252Dc';
-                    break;
-                case 3:
-                    toAddress = '0xa5CaC98d194603a11ce895BC9F10667A7434f8E2';
-                    break;
-                case 4:
-                    toAddress = '0x8a028F059e8633B37Bad57d5Da66b2eCdDf7f044';
-                    break;
-                case 5:
-                    toAddress = '0xE0641e51c20BdBECAE99783Fec963BC4c0374841';
-                    break;
-                case 6:
-                    toAddress = '0x75DC5748c40Ac457992914F5aCbAB18e62EBAC90';
-                    break;
-                case 7:
-                    toAddress = '0x2126b3439340D30715275e7853DA75ea3c0Ed6Ff';
-                    break;
-                case 8:
-                    toAddress = '0xBcaaA6d7935ADA652d89B0383dC6AfC51E7169a6';
-                    break;
-                case 9:
-                    toAddress = '0x05e92401E71f0FE02e97262dd4d10f9b324c9659';
-                    break;
-                case 10:
-                    toAddress = '0xAEA5F25890d7a19558C91929e68caB7D50527BF4';
-                    break;
-                case 11:
-                    toAddress = '0x49B1E2b0CC923c8A437c952CF789Dbd7B3fcca6c';
-                    break;
-                default:
-                    console.error(`Invalid coffeeId: ${coffeeId}`);
-                    continue;
+                /* coffeeId에 따른 판매자 주소 결정
+                let toAddress = '';
+                switch (coffeeIndex) {
+                    case 0:
+                        toAddress = '0x318377BDd383D3C4e5A164Cd5e977ECa4568507F'; // index 10
+                        break;
+                    case 1:
+                        toAddress = '0x6ddE52d8c45c3Cc79e2a7B5327a8e3EcDE3149E8'; // index 11
+                        break;
+                    case 2:
+                        toAddress = '0xC0b1b7848DEd531865703d875dB99719E9ceA6B5'; // index 12
+                        break;
+                    case 3:
+                        toAddress = '0x713E09B8Bbd032a9415e633f4B1F080933058af7'; // index 13
+                        break;
+                    case 4:
+                        toAddress = '0x76528CA1c6FDC1946Ba8AD3D97Dfc588f269c20d'; // index 14
+                        break;
+                    case 5:
+                        toAddress = '0x72DBf2eCee2159Bd6639e188dE8a85e640628008'; // index 15
+                        break;
+                    case 6:
+                        toAddress = '0x3Af7dB7da29C181a05B5B65893965aB550C5C453'; // index 16
+                        break;
+                    case 7:
+                        toAddress = '0x032C62C604eF1c3686CA4Aa030178664fd659B9E'; // index 17
+                        break;
+                    case 8:
+                        toAddress = '0x633acb00192AACF99dC0c1f31b4C7E8C2EA2B904'; // index 18
+                        break;
+                    case 9:
+                        toAddress = '0x685094aa537713bFd1Bd307C29b2ABFc222B4eAb'; // index 19
+                        break;
+                    case 10:
+                        toAddress = '0x37e0545E104D797c13A95b0076B70b68Cd50a7bE'; // index 20
+                        break;
+                    case 11:
+                        toAddress = '0xC7Ab76d1cDfD799207CA401099D12048421b3c74'; // index 21
+                        break;
+                    default:
+                        console.error(`Invalid coffeeId: ${coffeeId}`);
+                        continue;
             }
-
+            */
             // 트랜잭션 발생
             await this.contract.methods.purchaseCoffee(coffeeIndex, quantity).send({
                 from: this.accounts[this.logedUser.id],
-                to: toAddress,  // 각 coffeeId에 맞는 주소로 송금
+                to: this.accounts[coffeeIndex + 10],  // 각 coffeeId에 맞는 주소로 송금
                 value: totalUnitPriceWei,
             });
 
-            console.log(`Purchased ${quantity} units of coffee with ID ${coffeeIndex}, sent to ${toAddress}.`);
+            // console.log(`Purchased ${quantity} units of coffee with ID ${coffeeIndex}, sent to ${toAddress}.`);
         }
 
-            // 주문 완료 후 커미션 차감
-            const commissionWei = this.web3.utils.toWei(this.commision.toString(), 'ether');
-            await this.web3.eth.sendTransaction({
-                from: this.accounts[this.logedUser.id],
-<<<<<<< HEAD
-                // 커미션을 받을 계정 주소 to: this.contractAddress,
-                to: '0xE860132058426bd858f2F3dFd17DA1A09561973b',  
-=======
-                to: '0x9dbc4c4B6C5Ef959e72B95dC3b86157cA8a90ec7',  // 커미션을 받을 계정 주소
->>>>>>> f4fd85adbe2ec7a640a994b3a3b6d8a43bcc1920
-                value: commissionWei,
-            });
+            if (!this.loggedUser.manager) {
+                // 주문 완료 후 커미션 차감
+                const commissionWei = this.web3.utils.toWei(this.commision.toString(), 'ether');
+                await this.web3.eth.sendTransaction({
+                    from: this.accounts[this.logedUser.id],
+                    // 커미션을 받을 계정 22번 주소 설정
+                    // to: '0xD95Cfd466e795366aCC04d01Bed253E178e41E68',
+                    to: this.accounts[22],  
+                    value: commissionWei,
+                });
 
-            console.log(`Commission of ${this.commision} ETH sent to contract.`);
-
+                console.log(`Commission of ${this.commision} ETH sent to contract.`);
+            }
             // 주문 완료 후 처리
             this.shipAddr = '';
             this.shipTel = '';
@@ -255,7 +254,12 @@ export default {
                     this.totalPrice += parseFloat(value.totalCal(value.bType));
                     this.discountPrice += parseFloat(value.discount(value.amount, value.bType));
                 })
-                this.commision = (this.totalPrice - this.discountPrice)*0.30;
+                if (this.loggedUser.manager) {
+                    this.commision = 0;
+                }
+                else {
+                    this.commision = (this.totalPrice - this.discountPrice)*0.30;
+                }
                 this.subTotal = this.totalPrice - this.discountPrice + this.commision;
             },
             deep:true,
