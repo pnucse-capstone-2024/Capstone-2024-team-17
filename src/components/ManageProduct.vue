@@ -57,7 +57,7 @@ export default {
     saveProduction() {
       if (this.coffeeBeanType && this.productionQty > 0) {
         this.$emit('saveProduction', { beanType: this.coffeeBeanType, quantity: this.productionQty });
-        this.close();
+        this.$router.push({ name: 'products-page' });
       } 
       else {
         alert("Please select a coffee type or enter a valid production quantity.");

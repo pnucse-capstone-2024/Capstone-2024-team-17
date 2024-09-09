@@ -12,7 +12,7 @@
                 <h3 v-show="!memberstat">Membership: None</h3>
               </article>
               <article v-if="isSeller">
-                <button class="manageProduct" @click="manageProduct()">Manage my product</button>
+                <button class="manageProduct" @click="manageProduct()">Register Production Volume</button>
               </article>
               <h2>Products Page</h2>
               <div class="coffeePage">

@@ -7,7 +7,7 @@ import ShoppingCart from '../components/CartPage.vue'
 import MemberShip from '../components/MembershipPage.vue'
 import PagenotFound from '../components/PagenotFound.vue'
 import ShippingInfoCompo from '../components/ShippingInfoCompo.vue'
-import AdminDashboard from '../components/AdminDashboard.vue'
+import ManagerDashboard from '../components/ManagerDashboard.vue'
 import ManageProduct from '../components/ManageProduct.vue'
 
 const routes = [
@@ -48,9 +48,9 @@ const routes = [
         component: ShippingInfoCompo 
     },
     {
-        path: '/admindashboard',
-        name: 'admin-dashboard',
-        component: AdminDashboard
+        path: '/managerdashboard',
+        name: 'manager-dashboard',
+        component: ManagerDashboard
     },
     {
         path: '/manageproduct',

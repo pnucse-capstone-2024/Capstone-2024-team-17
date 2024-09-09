@@ -23,6 +23,8 @@
     {"id":20,"first_name":"Uma","last_name":"Green","username":"umag","email":"uma.green@admin.com","password":"adminpass11","membership":true,"seller":true,"manager":false},
     {"id":21,"first_name":"Victor","last_name":"Adams","username":"victora","email":"victor.adams@admin.com","password":"adminpass12","membership":true,"seller":true,"manager":false},
 
-    {"id":22,"first_name":"Juyeong","last_name":"Jo","username":"sante0926","email":"chojuyoung0926@naver.com","password":"whwndud1357!","membership":true,"seller":false,"manager":true}
+
+    {"id":22,"first_name":"Coffee","last_name":"Company","username":"manager","email":"asdf1234@naver.com","password":"manager!","membership":true,"seller":false,"manager":true},
+    {"id":23,"first_name":"Juyeong","last_name":"Jo","username":"sante0926","email":"chojuyoung0926@naver.com","password":"whwndud1357!","membership":true,"seller":false,"manager":false}
 ]
 
