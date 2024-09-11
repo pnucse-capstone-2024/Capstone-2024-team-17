@@ -31,6 +31,8 @@ The following commands should be executed in the root directory of your project 
    ### `npm install axios`  
    ### `npm install vue-router`  
    ### `npm install web3`
+   ### `npm install vuex`
+   ### `npm install vuex-persistedstate`
 
 
 ### 3. Running the Project
