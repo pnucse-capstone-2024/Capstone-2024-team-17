@@ -6,9 +6,10 @@ export class userClass{
     email;
     membership;
     seller;
+    distributor;
     manager;
 
-    constructor(id, first_name, last_name, username, email, member, seller, manager){
+    constructor(id, first_name, last_name, username, email, member, seller, distributor, manager){
         this.id = id;
         this.first_name = first_name;
         this.last_name = last_name;
@@ -16,6 +17,7 @@ export class userClass{
         this.email = email;
         this.membership = member;
         this.seller = seller;
+        this.distributor = distributor;
         this.manager = manager;
     }
 
@@ -28,6 +30,7 @@ export class userClass{
             email: this.email,
             membership: this.membership,
             seller: this.seller,
+            distributor: this.distributor,
             manager: this.manager
         }
     }

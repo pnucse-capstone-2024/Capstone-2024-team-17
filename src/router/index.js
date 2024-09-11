@@ -7,7 +7,7 @@ import ShoppingCart from '../components/CartPage.vue'
 import MemberShip from '../components/MembershipPage.vue'
 import PagenotFound from '../components/PagenotFound.vue'
 import ShippingInfoCompo from '../components/ShippingInfoCompo.vue'
-import ManagerDashboard from '../components/ManagerDashboard.vue'
+import DistributorDashboard from '../components/DistributorDashboard.vue'
 import ManageProduct from '../components/ManageProduct.vue'
 
 const routes = [
@@ -48,9 +48,9 @@ const routes = [
         component: ShippingInfoCompo 
     },
     {
-        path: '/managerdashboard',
-        name: 'manager-dashboard',
-        component: ManagerDashboard
+        path: '/distributordashboard',
+        name: 'distributor-dashboard',
+        component: DistributorDashboard
     },
     {
         path: '/manageproduct',

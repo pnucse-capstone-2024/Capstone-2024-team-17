@@ -56,7 +56,16 @@ export default {
     
     saveProduction() {
       if (this.coffeeBeanType && this.productionQty > 0) {
-        this.$emit('saveProduction', { beanType: this.coffeeBeanType, quantity: this.productionQty });
+        const productionData = {
+          beanType: this.coffeeBeanType,
+          quantity: this.productionQty,
+          coffeeName: this.coffeeName
+        };
+
+        // Vuex에 저장
+        this.$store.commit('addProduction', productionData);
+
+        // 페이지 이동
         this.$router.push({ name: 'products-page' });
       } 
       else {
