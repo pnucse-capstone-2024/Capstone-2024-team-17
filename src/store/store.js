@@ -1,4 +1,5 @@
 import { createStore } from 'vuex';
+import createPersistedState from 'vuex-persistedstate';
 
 export const store = createStore({
   state: {
@@ -13,5 +14,6 @@ export const store = createStore({
     getCoffeeProductions: state => {
       return state.coffeeProductions; // 모든 데이터 조회
     }
-  }
+  },
+  plugins: [createPersistedState()] // vuex-persistedstate 플러그인 추가
 });

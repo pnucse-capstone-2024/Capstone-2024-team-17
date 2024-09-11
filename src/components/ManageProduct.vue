@@ -65,6 +65,7 @@ export default {
         // Vuex에 저장
         this.$store.commit('addProduction', productionData);
 
+        console.log(this.$store.state);
         // 페이지 이동
         this.$router.push({ name: 'products-page' });
       } 

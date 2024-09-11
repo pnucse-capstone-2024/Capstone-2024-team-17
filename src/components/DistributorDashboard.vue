@@ -19,6 +19,7 @@
 export default {
   computed: {
     coffeeProductions() {
+      console.log(this.$store.getters.getCoffeeProductions);
       return this.$store.getters.getCoffeeProductions; // Vuex에서 데이터 조회
     }
   }

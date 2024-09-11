@@ -14,8 +14,8 @@
               <article v-if="isSeller">
                 <button class="manageProduct" @click="manageProduct()">Register Production Volume</button>
               </article>
-              <h2>Products Page</h2>
-              <div class="coffeePage">
+              <h2 v-if="!isSeller">Products Page</h2>
+              <div class="coffeePage" v-if="!isSeller">
                 <div class="coffeeBox" v-for="(product, idx) in coffeeList" :key="idx">
                   <aside class="productImg">{{ product[1].coffeeName }}</aside>
                   <div class="text">
