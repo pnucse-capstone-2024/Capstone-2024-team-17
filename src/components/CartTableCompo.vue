@@ -16,10 +16,10 @@
             <tbody>
                 <tr v-for="(coffee,idx) in coffeeItems" :key="idx">
                     <td scope="row">{{coffee[1].coffeeName}}</td>
-                    <td v-if="coffee[1].bSize !== ''">{{coffee[1].bSize}}</td>
-                    <td v-if="coffee[1].bSize === ''">-</td>
-                    <td v-if="coffee[1].bTemp !== ''">{{coffee[1].bTemp}}</td>
-                    <td v-if="coffee[1].bTemp === ''">-</td>
+                    <td v-if="coffee[1].origin !== ''">{{coffee[1].origin}}</td>
+                    <td v-if="coffee[1].origin === ''">-</td>
+                    <td v-if="coffee[1].pDay !== ''">{{coffee[1].pDay}}</td>
+                    <td v-if="coffee[1].pDay === ''">-</td>
                     <td v-if="coffee[1].bType !== ''">{{getBeanType(coffee[1].bType)}}</td>
                     <td>{{coffee[1].eachPrice(coffee[1].bType)}}</td>
                     <td>{{coffee[1].amount}}</td>
@@ -34,7 +34,7 @@
             </article>
             <section>
                 <ul v-for="(coffee,idx) in coffeeItems" :key="idx">
-                    <li v-if="coffee[1].type !== 'Beverage'">
+                    <li>
                         <p><span style="margin-left: 10px;">{{coffee[1].coffeeName}}</span> x {{coffee[1].amount}}(100g)</p>
                     </li>
                 </ul>
@@ -89,7 +89,7 @@ export default {
             web3: null,
             contract: null,
             accounts: [],
-            contractAddress: '0xa6A96Be3f5CbBCa1Edf1533c8A3e3b61A2b1a2eD'
+            contractAddress: '0xa6A96Be3f5CbBCa1Edf1533c8A3e3b61A2b1a2eD' // released contract address through Remix IDE
         }
     },
     methods:{
@@ -160,58 +160,12 @@ export default {
                 const totalUnitPrice = coffee.totalCal(coffee.bType); // 총 가격 계산 (ETH로)
                 const totalUnitPriceWei = this.web3.utils.toWei(totalUnitPrice.toString(), 'ether');
 
-                /* coffeeId에 따른 판매자 주소 결정
-                let toAddress = '';
-                switch (coffeeIndex) {
-                    case 0:
-                        toAddress = '0x318377BDd383D3C4e5A164Cd5e977ECa4568507F'; // index 10
-                        break;
-                    case 1:
-                        toAddress = '0x6ddE52d8c45c3Cc79e2a7B5327a8e3EcDE3149E8'; // index 11
-                        break;
-                    case 2:
-                        toAddress = '0xC0b1b7848DEd531865703d875dB99719E9ceA6B5'; // index 12
-                        break;
-                    case 3:
-                        toAddress = '0x713E09B8Bbd032a9415e633f4B1F080933058af7'; // index 13
-                        break;
-                    case 4:
-                        toAddress = '0x76528CA1c6FDC1946Ba8AD3D97Dfc588f269c20d'; // index 14
-                        break;
-                    case 5:
-                        toAddress = '0x72DBf2eCee2159Bd6639e188dE8a85e640628008'; // index 15
-                        break;
-                    case 6:
-                        toAddress = '0x3Af7dB7da29C181a05B5B65893965aB550C5C453'; // index 16
-                        break;
-                    case 7:
-                        toAddress = '0x032C62C604eF1c3686CA4Aa030178664fd659B9E'; // index 17
-                        break;
-                    case 8:
-                        toAddress = '0x633acb00192AACF99dC0c1f31b4C7E8C2EA2B904'; // index 18
-                        break;
-                    case 9:
-                        toAddress = '0x685094aa537713bFd1Bd307C29b2ABFc222B4eAb'; // index 19
-                        break;
-                    case 10:
-                        toAddress = '0x37e0545E104D797c13A95b0076B70b68Cd50a7bE'; // index 20
-                        break;
-                    case 11:
-                        toAddress = '0xC7Ab76d1cDfD799207CA401099D12048421b3c74'; // index 21
-                        break;
-                    default:
-                        console.error(`Invalid coffeeId: ${coffeeId}`);
-                        continue;
-            }
-            */
             // 트랜잭션 발생
             await this.contract.methods.purchaseCoffee(coffeeIndex, quantity).send({
                 from: this.accounts[this.logedUser.id],
                 to: this.accounts[coffeeIndex + 10],  // 각 coffeeId에 맞는 주소로 송금
                 value: totalUnitPriceWei,
             });
-
-            // console.log(`Purchased ${quantity} units of coffee with ID ${coffeeIndex}, sent to ${toAddress}.`);
         }
 
             if (!this.loggedUser.manager) {
@@ -219,9 +173,7 @@ export default {
                 const commissionWei = this.web3.utils.toWei(this.commision.toString(), 'ether');
                 await this.web3.eth.sendTransaction({
                     from: this.accounts[this.logedUser.id],
-                    // 커미션을 받을 계정 22번 주소 설정
-                    // to: '0xD95Cfd466e795366aCC04d01Bed253E178e41E68',
-                    to: this.accounts[22],  
+                    to: this.accounts[23],  
                     value: commissionWei,
                 });
 

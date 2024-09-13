@@ -6,17 +6,17 @@ export class productClass{
     type;
     amount;
     bType;
-    bTemp;
-    bSize;
-    constructor(pId, coffeeName, price, description, type, bType, bTemp, bSize, amount){
+    origin;
+    pDay;
+    constructor(pId, coffeeName, price, description, type, bType, origin, pDay, amount){
         this.pId = pId;
         this.coffeeName = coffeeName;
         this.price = price;
         this.description = description;
         this.type = type;
         this.bType = bType;
-        this.bTemp = bTemp;
-        this.bSize = bSize;
+        this.origin = origin;
+        this.pDay = pDay;
         this.amount = amount;
     }
 

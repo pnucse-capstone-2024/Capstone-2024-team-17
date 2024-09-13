@@ -6,14 +6,11 @@
         <ul v-if="sesssionCheck">
             <li><router-link to='/home'>Home</router-link></li>
             <li><router-link to='/products'>Products</router-link></li>
-            <li v-if="!isSeller"><router-link to='/recipe'>Recipes</router-link></li>
+            <li v-if="!isSeller && !isDistributor"><router-link to='/recipe'>Recipes</router-link></li>
             <li><router-link to='/membership'>Membership</router-link></li>
-            <li v-if="!isSeller"><router-link to='/shoppingcart'>Shopping Cart</router-link></li>
+            <li v-if="!isSeller && !isDistributor"><router-link to='/shoppingcart'>Shopping Cart</router-link></li>
             <li v-if="!isSeller"><router-link to='/shippinginfo'>Shipping Info</router-link></li>
             <li v-if="isDistributor"><router-link to='/distributordashboard'>Distributor Dashboard</router-link></li>
-            <!--
-            <li><router-link to='/distributordashboard'>Distributor Dashboard</router-link></li>
-            -->
         </ul>
         <ul v-else>
             <li><router-link v-show="!user" to='/login'>Login</router-link></li>
@@ -27,7 +24,7 @@
             <form v-else>
                 <button v-show="user" @click="logout">Logout</button>
             </form>
-            <figure v-if="sesssionCheck" @click="redirectToCheckout"><div>{{cartAdd.size}}</div></figure>
+            <figure v-if="sesssionCheck && !isDistributor" @click="redirectToCheckout"><div>{{cartAdd.size}}</div></figure>
         </article>
     </nav>
 </template>
@@ -93,7 +90,7 @@ aside {
     align-items: center;
     padding-left: 5%;
 }
-/* Shopping Cart */
+
 article {
     position: absolute;
     display: flex;

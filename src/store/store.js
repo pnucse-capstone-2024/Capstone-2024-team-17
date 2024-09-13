@@ -8,6 +8,23 @@ export const store = createStore({
   mutations: {
     addProduction(state, production) {
       state.coffeeProductions.push(production); // 데이터 추가
+    },
+    removeProduction(state, index) {
+      state.coffeeProductions.splice(index, 1); // 인덱스에 해당하는 데이터를 제거
+    },
+    markProductionAsProcessed(state, index) {
+      state.coffeeProductions[index].processed = true; // 인덱스에 해당하는 데이터를 처리 완료 상태로 변경
+    }
+  },
+  actions: {
+    addCoffeeProduction({ commit }, production) {
+      commit('addProduction', production);
+    },
+    deleteCoffeeProduction({ commit }, index) {
+      commit('removeProduction', index);
+    },
+    processCoffeeProduction({ commit }, index) {
+      commit('markProductionAsProcessed', index);
     }
   },
   getters: {

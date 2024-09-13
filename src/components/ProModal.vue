@@ -35,7 +35,7 @@
           </section>
 
           <footer class="modal-footer">
-              <button v-if="sessionCheck" type="button" class="btn-green" @click="addTocart">Add Cart</button>
+              <button v-if="sessionCheck && !isDistributor" type="button" class="btn-green" @click="addTocart">Add Cart</button>
           </footer>
       </div>
   </div>
@@ -56,7 +56,8 @@ export default {
           total:0,
           newPrice : this.CoffeeOptions.price,
           logedUser: null,
-          sessionCheck: false
+          sessionCheck: false,
+          isDistributor: false
       }
   },
   methods: {
@@ -103,6 +104,7 @@ export default {
         if (storedUser) {
           this.logedUser = storedUser;
           this.sessionCheck = true;
+          this.isDistributor = this.logedUser.distributor;
         }
       },
   },
