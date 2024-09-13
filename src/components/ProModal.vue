@@ -35,7 +35,7 @@
           </section>
 
           <footer class="modal-footer">
-              <button type="button" class="btn-green" @click="addTocart">Add Cart</button>
+              <button v-if="sessionCheck" type="button" class="btn-green" @click="addTocart">Add Cart</button>
           </footer>
       </div>
   </div>
@@ -54,7 +54,9 @@ export default {
           amount:1,
           flag:false,
           total:0,
-          newPrice : this.CoffeeOptions.price
+          newPrice : this.CoffeeOptions.price,
+          logedUser: null,
+          sessionCheck: false
       }
   },
   methods: {
@@ -96,6 +98,13 @@ export default {
           cal = this.CoffeeOptions.price
           return cal
       },
+      checkSession() {    
+        const storedUser = JSON.parse(sessionStorage.getItem('logeduser'));
+        if (storedUser) {
+          this.logedUser = storedUser;
+          this.sessionCheck = true;
+        }
+      },
   },
   watch:{
     newPrice(){
@@ -106,6 +115,7 @@ export default {
   },
   mounted(){
       this.loadJson();
+      this.checkSession();
   },
 };
 </script>

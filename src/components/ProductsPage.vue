@@ -88,15 +88,16 @@
           });
       },
       showModal(val) {
+        /*
         const managedCoffeeId = this.logedUser.id - 10;
         if (val.pId === managedCoffeeId) {
           alert("You cannot purchase your own coffee beans.");
         }
-        else {
-          this.isModalVisible = true;
-          let coffeeOject = new productClass(val.pId, val.coffeeName, val.price, val.description, '', '', '', 1);
-          this.getProduct = coffeeOject;
-        }
+        else {*/
+        this.isModalVisible = true;
+        let coffeeOject = new productClass(val.pId, val.coffeeName, val.price, val.description, '', '', '', 1);
+        this.getProduct = coffeeOject;
+        
       },
       closeModal() {
         this.isModalVisible = false;
@@ -122,8 +123,6 @@
         this.fullName = this.logedUser.first_name + ' ' + this.logedUser.last_name;
         this.memberstat = this.logedUser.membership;
         this.isSeller = this.logedUser.seller;
-
-        // console.log('isSeller:', this.isSeller);
       }
     },
   };

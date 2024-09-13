@@ -19,8 +19,6 @@
             <li><router-link v-show="!user" to='/login'>Login</router-link></li>
             <li><router-link to='/home'>Home</router-link></li>
             <li><router-link to='/products'>Products</router-link></li>
-            <li><router-link to='/recipe'>Recipes</router-link></li>
-
         </ul>
         <article>
             <form v-if="sesssionCheck">
@@ -29,7 +27,7 @@
             <form v-else>
                 <button v-show="user" @click="logout">Logout</button>
             </form>
-            <figure @click="redirectToCheckout"><div>{{cartAdd.size}}</div></figure>
+            <figure v-if="sesssionCheck" @click="redirectToCheckout"><div>{{cartAdd.size}}</div></figure>
         </article>
     </nav>
 </template>

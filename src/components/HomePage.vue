@@ -10,7 +10,7 @@
                         <h4>-You can buy coffee beans with Ethereum!!!</h4>
                         <h4>-Conduct secure transactions by purchasing products with Ethereum</h4>
                         <h4>-Ethereum is a globally recognized digital asset</h4>
-                        <button type="button" @click="redirectToMembership">Join now &#8594;</button>
+                        <button v-if="!sessionCheck" type="button" @click="redirectToMembership">Sign in now &#8594;</button>
                     </section>
                     <section>
                          <h2>Important</h2>
@@ -29,22 +29,41 @@
         </div>
     </div>
 </template>
+
 <script>
 export default {
     name: 'HomePage',
-    methods:{
-        pageMaker(){
+    data() {
+        return {
+            logedUser: null,
+            sessionCheck: false
+        };
+    },
+
+    methods: {
+        checkSession() {
+            // Check if there's a logged-in user from sessionStorage
+            const storedUser = JSON.parse(sessionStorage.getItem('logeduser'));
+            if (storedUser) {
+                this.logedUser = storedUser;
+                this.sessionCheck = true;
+            }
+        },
+        pageMaker() {
             this.$emit('pageMarker', 'Home');
         },
-        redirectToMembership(){
-            this.$router.push({name:'member-ship'})
+        redirectToMembership() {
+            this.$router.push({ name: 'login-page' });
         }
     },
+
     mounted(){
-        this.pageMaker()
+        this.pageMaker();
+        this.checkSession(); // Call checkSession to verify login state on page load
     }
 }
 </script>
+
 <style scoped>
 .content{
     background-image: url('../../public/img/MembershipPic.jpg');
