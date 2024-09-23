@@ -20,7 +20,7 @@
                     <td v-if="coffee[1].origin === ''">-</td>
                     <td v-if="coffee[1].pDay !== ''">{{coffee[1].pDay}}</td>
                     <td v-if="coffee[1].pDay === ''">-</td>
-                    <td v-if="coffee[1].bType !== ''">{{getBeanType(coffee[1].bType)}}</td>
+                    <td v-if="coffee[1].bType !== ''">{{coffee[1].bType}}</td>
                     <td>{{coffee[1].eachPrice(coffee[1].bType)}}</td>
                     <td>{{coffee[1].amount}}</td>
                     <td>{{coffee[1].totalCal(coffee[1].bType)}}</td>
@@ -64,6 +64,7 @@
 
 import Web3 from 'web3';
 import CoffeeContract from '../abi/PaymentContract.json';
+import { mapActions } from 'vuex';
 
 export default {
     name:'CartTableCompo',
@@ -93,20 +94,7 @@ export default {
         }
     },
     methods:{
-        getBeanType(fee) {
-            switch (fee) {
-                case 0:
-                    return "Whole beans";
-                case 1:
-                    return "Ground";
-                case 2:
-                    return "Drip Package";
-                case 3:
-                    return "Capsule";
-                default:
-                    return "-";
-            }
-        },
+        ...mapActions(['updateConfirmedProductionQuantity']),
         
         async loadUserBalance() {
             try {
@@ -144,58 +132,69 @@ export default {
         },
 
 
-    async orderFunc() {
-    // 체크박스가 체크되어 있는지 확인
-        if (!this.chBox) {
-            alert("Please agree to the terms and conditions.");
-            event.preventDefault();
-            return;
-        }
+        async orderFunc() {
+            try {
+                // 각 커피 항목에 대해 트랜잭션 수행
+                for (let [coffeeId, coffee] of this.coffeeItems.entries()) {
+                    const quantity = coffee.amount;
+                    const coffeeIndex = parseInt(coffeeId);
+                    const totalUnitPrice = coffee.totalCal(coffee.bType); // 총 가격 계산 (ETH로)
+                    const totalUnitPriceWei = this.web3.utils.toWei(totalUnitPrice.toString(), 'ether');
 
-        try {
-            // 각 커피 항목에 대해 트랜잭션 수행
-            for (let [coffeeId, coffee] of this.coffeeItems.entries()) {
-                const quantity = coffee.amount;
-                const coffeeIndex = parseInt(coffeeId);
-                const totalUnitPrice = coffee.totalCal(coffee.bType); // 총 가격 계산 (ETH로)
-                const totalUnitPriceWei = this.web3.utils.toWei(totalUnitPrice.toString(), 'ether');
+                    // 트랜잭션 발생
+                    await this.contract.methods.purchaseCoffee(coffeeIndex, quantity).send({
+                        from: this.accounts[this.logedUser.id],
+                        to: this.accounts[coffeeIndex + 10],  // 각 coffeeId에 맞는 주소로 송금
+                        value: totalUnitPriceWei,
+                    });
 
-            // 트랜잭션 발생
-            await this.contract.methods.purchaseCoffee(coffeeIndex, quantity).send({
-                from: this.accounts[this.logedUser.id],
-                to: this.accounts[coffeeIndex + 10],  // 각 coffeeId에 맞는 주소로 송금
-                value: totalUnitPriceWei,
-            });
-        }
+                    // 주문한 수량만큼 재고 감소
+                    // 커피 이름과 타입을 가져옵니다.
+                    const coffeeName = coffee.coffeeName;
+                    const beanType = coffee.bType;
+                    const orderedAmount = quantity; 
 
-            if (!this.loggedUser.manager) {
-                // 주문 완료 후 커미션 차감
-                const commissionWei = this.web3.utils.toWei(this.commision.toString(), 'ether');
-                await this.web3.eth.sendTransaction({
-                    from: this.accounts[this.logedUser.id],
-                    to: this.accounts[23],  
-                    value: commissionWei,
-                });
+                    // Vuex 스토어에서 해당 상품을 찾습니다.
+                    const product = this.$store.getters.getConfirmedProductions.find(
+                        item => item.coffeeName === coffeeName && item.beanType === beanType,
+                    );
 
-                console.log(`Commission of ${this.commision} ETH sent to contract.`);
+                    if (product) {
+                        const newQuantity = product.quantity - orderedAmount;
+                        if (newQuantity < 0) {
+                            alert(`The stock of ${coffeeName} (${beanType}) is insufficient`);
+                            return;
+                        }
+
+                        this.updateConfirmedProductionQuantity({
+                        coffeeName,
+                        beanType,
+                        newQuantity
+                        });
+
+                    } 
+                    else {
+                        alert(`${coffeeName} (${beanType}) cannot be found`);
+                        return;
+                    }
+
+                }
+                this.shipAddr = '';
+                this.shipTel = '';
+                this.chBox = false;
+                this.logedUser.point -= this.mPoint;
+                this.logedUser.point += this.addPoint;
+                this.mPoint = 0;
+                sessionStorage.setItem('logeduser', JSON.stringify(this.logedUser));
+                localStorage.clear();
+                location.reload();
+                this.show = true;
+
+            } 
+            catch (error) {
+                console.error('Transaction failed:', error);
+                alert(`There was an error processing your transaction: ${error.message}`);
             }
-            // 주문 완료 후 처리
-            this.shipAddr = '';
-            this.shipTel = '';
-            this.chBox = false;
-            this.logedUser.point -= this.mPoint;
-            this.logedUser.point += this.addPoint;
-            this.mPoint = 0;
-            sessionStorage.setItem('logeduser', JSON.stringify(this.logedUser));
-            localStorage.clear();
-            location.reload();
-            this.show = true;
-
-        }
-        catch (error) {
-            console.error('Transaction failed:', error);
-            alert(`There was an error processing your transaction: ${error.message}`);
-        }
     }
 
     },

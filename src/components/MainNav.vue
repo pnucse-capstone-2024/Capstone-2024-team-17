@@ -24,7 +24,7 @@
             <form v-else>
                 <button v-show="user" @click="logout">Logout</button>
             </form>
-            <figure v-if="sesssionCheck && !isDistributor" @click="redirectToCheckout"><div>{{cartAdd.size}}</div></figure>
+            <figure v-if="sesssionCheck && !isDistributor && !isSeller" @click="redirectToCheckout"><div>{{cartAdd.size}}</div></figure>
         </article>
     </nav>
 </template>

@@ -1,126 +1,162 @@
 <template>
   <div class="modal-backdrop">
-      <div class="modal">
-          <header class="modal-header">
-              <slot name="header">
-                {{CoffeeOptions.description}}
-              </slot>
-              <button type="button" class="btn-close" @click="close">x</button>
-          </header>
+    <div class="modal">
+      <header class="modal-header">
+        <slot name="header">
+          {{ CoffeeOptions.description }}
+        </slot>
+        <button type="button" class="btn-close" @click="close">x</button>
+      </header>
 
-          <section class="modal-body">
-              <aside class="coffeeImg">{{CoffeeOptions.coffeeName}}</aside>
-              <div class="bodytest" name="body">
-                  <h2>
-                    {{CoffeeOptions.coffeeName}}
-                  </h2>
-                  <h3>
-                    Price : Ξ {{newPrice}} / <small>100g</small>
-                  </h3>
-                  <div class="modal_main">
-                    <div class="right">
-                      <div>
-                        <select v-model="selectedOption" v-on:change="totalCh()" class="table-primary form-control">
-                          <option value="no" selected disabled>Select your Coffee Bean Type</option>
-                          <option v-for="(option,idx) in options" :key="idx" v-bind:value="option.fee">{{option.type}}</option>
-                        </select>
-                      </div>
-                      <div>
-                        <span v-show="!flag"> weight(100g) :</span>
-                        <input  min='0' v-show="!flag" type="number" v-model="amount" v-on:change="totalCh()">
-                      </div>
-                    </div>
-                  </div>
+      <section class="modal-body">
+        <aside class="coffeeImg">{{ CoffeeOptions.coffeeName }}</aside>
+        <div class="bodytest" name="body">
+          <h2>{{ CoffeeOptions.coffeeName }}</h2>
+          <h3>Price : Ξ {{ amount * newPrice }} / <small>{{ amount * 100 }}g</small></h3>
+
+          <div class="modal_main">
+            <div class="right">
+              <div>
+                <select v-model="selectedOption" @change="totalCh()" class="table-primary form-control">
+                  <option value="no" selected disabled>Select your Coffee Bean Type</option>
+                  <option v-for="(option, idx) in options" :key="idx" :value="option">
+                    {{ option.type }} ({{ getAvailableQuantities(option.type) }} available)
+                  </option>
+                </select>
               </div>
-          </section>
+              <div>
+                <span v-show="!flag"> weight(100g) :</span>
+                <input min="1" :max="getAvailableQuantities(selectedOption ? selectedOption.type : null)" v-show="!flag" type="number" v-model.number="amount" @change="totalCh()">
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
-          <footer class="modal-footer">
-              <button v-if="sessionCheck && !isDistributor" type="button" class="btn-green" @click="addTocart">Add Cart</button>
-          </footer>
-      </div>
+      <footer class="modal-footer">
+        <button v-if="sessionCheck && !isDistributor && !isSeller" type="button" class="btn-green" @click="addTocart">Add Cart</button>
+      </footer>
+    </div>
   </div>
 </template>
+
 <script>
+import { mapGetters } from 'vuex';  // Vuex의 getter를 사용하기 위해 mapGetters를 임포트
 import { productClass } from '@/classes/productClass';
-import readJson from '../services/JsonService.js'
+import readJson from '../services/JsonService.js';
+
 export default {
   name: 'ProModal',
-  props:['CoffeeOptions'],
-  data(){
-      return{
-          selectedOption: "no",
-          options: '',
-          optionFee:0,
-          amount:1,
-          flag:false,
-          total:0,
-          newPrice : this.CoffeeOptions.price,
-          logedUser: null,
-          sessionCheck: false,
-          isDistributor: false
-      }
+  props: ['CoffeeOptions'],
+  data() {
+    return {
+      selectedOption: null,  // 초기값을 null로 설정
+      options: '',
+      optionFee: 0,
+      amount: 1,
+      flag: false,
+      total: 0,
+      newPrice: 0,
+      logedUser: null,
+      sessionCheck: false,
+      isDistributor: false,
+      isSeller: false,
+    };
+  },
+  computed: {
+    ...mapGetters(['getConfirmedProductions']),
   },
   methods: {
-      close() {
-        this.total = 0
-        this.amount=1;
-        this.selectedOption = "no"
-        this.$emit('close');
-      },
-      addTocart(){
-        if(this.selectedOption =="no"){
-          alert("You have to choose all the options")
-        }else{
-          let addCart = new productClass(this.CoffeeOptions.pId,this.CoffeeOptions.coffeeName,this.CoffeeOptions.price,"","",this.selectedOption,"","",this.amount)
-          this.total = 0
-          this.amount=1;
-          this.selectedOption = "no"
-          this.flag = false
+    close() {
+      this.total = 0;
+      this.amount = 1;
+      this.newPrice = 0;
+      this.selectedOption = null;
+      this.$emit('close');
+    },
+    addTocart() {
+      if (!this.selectedOption) {
+        alert("You have to choose all the options");
+      } else {
+        const availableQuantity = this.getAvailableQuantities(this.selectedOption.type);
+        if (this.amount > availableQuantity) {
+          alert("Selected amount exceeds available quantity");
+        } 
+        else {
+          let addCart = new productClass(
+            this.CoffeeOptions.pId,
+            this.CoffeeOptions.coffeeName,
+            this.CoffeeOptions.price,
+            "", "", this.selectedOption.type, "", "", this.amount
+          );
+          this.total = 0;
+          this.amount = 1;
+          this.selectedOption = null;
+          this.flag = false;
           this.$emit('close');
-          this.$emit('cartAdding',addCart);
+          this.$emit('cartAdding', addCart);
         }
-      },
-      loadJson(){
-          readJson.getJson("option")
-          .then(res=>{
-              this.options = res.data
-          }).catch(err=>{console.log(err)})
-      },
-      totalCh(){
-        let price = this.totalAll();
-        this.flag = false
-        this.optionFee = this.selectedOption;
-        let price2 = ((price + this.optionFee) * this.amount).toFixed(2);
-        this.newPrice = price + this.optionFee
-        this.total = price2;
-      },
-      totalAll(){
-          let cal = 0;
-          cal = this.CoffeeOptions.price
-          return cal
-      },
-      checkSession() {    
-        const storedUser = JSON.parse(sessionStorage.getItem('logeduser'));
-        if (storedUser) {
-          this.logedUser = storedUser;
-          this.sessionCheck = true;
-          this.isDistributor = this.logedUser.distributor;
-        }
-      },
-  },
-  watch:{
-    newPrice(){
-      if(this.newPrice == undefined){
-        console.log('yes')
       }
-    }
+    },
+    loadJson() {
+      readJson.getJson("option")
+        .then(res => {
+          this.options = res.data;
+        }).catch(err => {
+          console.log(err);
+        });
+    },
+    totalCh() {
+      let price = this.totalAll();
+      this.flag = false;
+      this.optionFee = this.selectedOption ? this.selectedOption.fee : 0;
+      let price2 = ((price + this.optionFee) * this.amount).toFixed(2);
+      this.newPrice = price + this.optionFee;
+      this.total = price2;
+    },
+    totalAll() {
+      let cal = 0;
+      cal = this.CoffeeOptions.price;
+      return cal;
+    },
+    checkSession() {
+      const storedUser = JSON.parse(sessionStorage.getItem('logeduser'));
+      if (storedUser) {
+        this.logedUser = storedUser;
+        this.sessionCheck = true;
+        this.isDistributor = this.logedUser.distributor;
+        this.isSeller = this.logedUser.seller;
+      }
+    },
+    getAvailableQuantities(beanType) {
+      if (!beanType) return '-';
+      const product = this.getConfirmedProductions.find(
+        item =>
+          item.coffeeName === this.CoffeeOptions.coffeeName &&
+          item.beanType === beanType
+      );
+      if (product) {
+        const quantity = product.quantity * 10; // 100g 단위로 변환
+        return quantity;
+      } else {
+        return '0';
+      }
+    },
   },
-  mounted(){
-      this.loadJson();
-      this.checkSession();
+  watch: {
+    newPrice() {
+      if (this.newPrice == undefined) {
+        console.log('yes');
+      }
+    },
   },
+  mounted() {
+    this.loadJson();
+    this.checkSession();
+  }
 };
 </script>
+
 <style scoped>
 .modal-backdrop {
   position: fixed;
@@ -184,10 +220,13 @@ export default {
   border-radius: 5px;
   padding: 1%;
 }
-.modal_main{
+.modal_main {
   display: flex;
 }
-.coffeeImg{
+.bean-quantities {
+  margin-bottom: 20px;
+}
+.coffeeImg {
   width: 100%;
   height: 150px;
   border-radius: 10px;
@@ -203,7 +242,7 @@ export default {
   background-position: center;
   background-size: cover;
 }
-.left{
+.left {
   width: 65%;
   text-align: center;
   background-color: #4AAE9B;
@@ -211,7 +250,7 @@ export default {
   margin-right: 5px;
   border-radius: 10px;
 }
-.right{
+.right {
   display: flex;
   flex-direction: column;
 }
@@ -219,17 +258,17 @@ export default {
   display: flex;
   flex-direction: column;
 }
-h2, h3, h5{
+h2, h3, h5 {
   margin: 10px 0px;
-} 
-select{
+}
+select {
   padding: 1%;
   border-radius: 5px;
   border: 1px solid #4AAE9B;
   right: 5%;
   bottom: 1%;
 }
-input{
+input {
   padding: 3%;
   border: 1px solid #4AAE9B;
   background: transparent;

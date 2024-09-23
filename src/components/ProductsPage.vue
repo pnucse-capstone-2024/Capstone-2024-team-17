@@ -14,8 +14,8 @@
               <article v-if="isSeller">
                 <button class="manageProduct" @click="manageProduct()">Register Production Volume</button>
               </article>
-              <h2 v-if="!isSeller">Products Page</h2>
-              <div class="coffeePage" v-if="!isSeller">
+              <h2>Products Page</h2>
+              <div class="coffeePage">
                 <div class="coffeeBox" v-for="(product, idx) in coffeeList" :key="idx">
                   <aside class="productImg">{{ product[1].coffeeName }}</aside>
                   <div class="text">
@@ -88,12 +88,6 @@
           });
       },
       showModal(val) {
-        /*
-        const managedCoffeeId = this.logedUser.id - 10;
-        if (val.pId === managedCoffeeId) {
-          alert("You cannot purchase your own coffee beans.");
-        }
-        else {*/
         this.isModalVisible = true;
         let coffeeOject = new productClass(val.pId, val.coffeeName, val.price, val.description, '', '', '', 1);
         this.getProduct = coffeeOject;
@@ -112,6 +106,9 @@
       },
       manageProduct() {
         this.$router.push({ name: 'manage-product' });
+        setTimeout(() => {
+          window.location.reload();  // 페이지가 전환된 후 새로고침
+        }, 100);
       },
     },
     async mounted() {

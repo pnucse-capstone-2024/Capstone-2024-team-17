@@ -20,37 +20,48 @@ export class productClass{
         this.amount = amount;
     }
 
+
     discount(amount, fee) {
-        let Price = this.price; //0
-        
+        let Price = this.price; // 0
+        let feeAmount = 0;
+    
+        if(fee == "Whole beans") {
+            feeAmount = 0;
+        } else if(fee == "Ground") {
+            feeAmount = 1;
+        } else if(fee == "Drip Package") {
+            feeAmount = 2;
+        } else if(fee == "Capsule") {
+            feeAmount = 3;
+        }
+    
         if(amount <= 4) {
-            Price = 0
+            Price = 0;
+        } else if(amount > 4 && amount <= 9) {
+            Price = (this.price + feeAmount) * 0.05;
+        } else if(amount > 9) {
+            Price = (this.price + feeAmount) * 0.10;
         }
-        else if(amount > 4 && amount <=9) {
-            Price = (this.price + fee) * 0.05
-        }
-        else if(amount > 9) {
-            Price = (this.price + fee) * 0.10
-        }
-        
-        let discount = (Price * this.amount).toFixed(2)
-        return discount
+    
+        let discount = (Price * amount).toFixed(2);
+        return discount;
     }
+    
 
     eachPrice(fee) {
         let Price = this.price;
         let optionFee = 0
     
-        if(fee == 0) {
+        if(fee == "Whole beans") {
             optionFee = 0;
         }
-        else if(fee == 1) {
+        else if(fee == "Ground") {
             optionFee = 1;
         } 
-        else if(fee == 2) {
+        else if(fee == "Drip Package") {
             optionFee = 2;
         } 
-        else if(fee == 3) {
+        else if(fee == "Capsule") {
             optionFee = 3;
         }
 
@@ -63,16 +74,16 @@ export class productClass{
         let Price = this.price; //0
         let optionFee = 0
         
-        if(fee == 0) {
+        if(fee == "Whole beans") {
             optionFee = 0;
         } 
-        else if(fee == 1) {
+        else if(fee == "Ground") {
             optionFee = 1;
         }
-        else if(fee == 2) {
+        else if(fee == "Drip Package") {
             optionFee = 2;
         }
-        else if(fee == 3) {
+        else if(fee == "Capsule") {
             optionFee = 3;
         }
 

@@ -18,9 +18,9 @@
         <div v-if="selectedOption === 'production'">
           <div v-if="coffeeProductions.length > 0">
             <ul>
-              <li v-for="(production, index) in coffeeProductions" :key="index">
-                Coffee: {{ production.coffeeName }} - Type: {{ production.beanType }} - Quantity: {{ production.quantity }}kg
-                <button class="check-btn" @click="markAsProcessed(index)">✅</button>
+              <li v-for="(product, index) in coffeeProductions" :key="index">
+                Coffee: {{ product.coffeeName }} - Type: {{ product.beanType }} - Quantity: {{ product.quantity * 100 }}g
+                <button class="check-btn" @click="selectProduction(product, index)">✅</button>
                 <button class="delete-btn" @click="deleteProduction(index)">❌</button>
               </li>
             </ul>
@@ -72,14 +72,19 @@ export default {
       alert('Refreshing coffee production data...');
       window.location.reload();
     },
-    markAsProcessed(index) {
-      const production = this.coffeeProductions[index];
-      this.$store.dispatch('processCoffeeProduction', production);
-      alert(`Coffee production of ${production.coffeeName} processed.`);
+    selectProduction(product, index) {
+      const productInfo = {
+        coffeeName: product.coffeeName,
+        beanType: product.beanType,
+        quantity: product.quantity
+      };
+      this.$store.dispatch('confirmCoffeeProduction', productInfo);
+      alert(`The stock for ${productInfo.coffeeName}, ${productInfo.beanType}, ${productInfo.quantity * 100}g has been successfully registered.`);
+      this.$store.dispatch('deleteCoffeeProduction', index);
     },
     deleteProduction(index) {
-      const confirmed = confirm('Are you sure you want to delete this data?');
-      if (confirmed) {
+      const delconfirmed = confirm('Are you sure you want to delete the product data?');
+      if (delconfirmed) {
         this.$store.dispatch('deleteCoffeeProduction', index);
       } else {
         alert('The deletion has been canceled.');
