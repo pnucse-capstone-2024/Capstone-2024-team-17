@@ -19,7 +19,7 @@
           <div v-if="coffeeProductions.length > 0">
             <ul>
               <li v-for="(product, index) in coffeeProductions" :key="index">
-                Coffee: {{ product.coffeeName }} - Type: {{ product.beanType }} - Quantity: {{ product.quantity * 100 }}g
+                Coffee: {{ product.coffeeName }} - Type: {{ product.beanType }} - Quantity: {{ product.quantity }}kg
                 <button class="check-btn" @click="selectProduction(product, index)">✅</button>
                 <button class="delete-btn" @click="deleteProduction(index)">❌</button>
               </li>
@@ -79,7 +79,7 @@ export default {
         quantity: product.quantity
       };
       this.$store.dispatch('confirmCoffeeProduction', productInfo);
-      alert(`The stock for ${productInfo.coffeeName}, ${productInfo.beanType}, ${productInfo.quantity * 100}g has been successfully registered.`);
+      alert(`The stock for ${productInfo.coffeeName}, ${productInfo.beanType}, ${productInfo.quantity}kg has been successfully registered.`);
       this.$store.dispatch('deleteCoffeeProduction', index);
     },
     deleteProduction(index) {

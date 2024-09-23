@@ -14,7 +14,18 @@ export const store = createStore({
       state.coffeeProductions.splice(index, 1); // 인덱스에 해당하는 데이터를 제거
     },
     confirmProduction(state, product) {
-      state.confirmedProductions.push(product); // 컨펌한 데이터 추가
+      // 기존 상품이 있는지 확인
+      const existingProduct = state.confirmedProductions.find(
+        item => item.coffeeName === product.coffeeName && item.beanType === product.beanType
+      );
+    
+      if (existingProduct) {
+        // 기존 상품이 있으면 수량을 누적
+        existingProduct.quantity += product.quantity;
+      } else {
+        // 기존 상품이 없으면 새로운 상품 추가
+        state.confirmedProductions.push(product);
+      }
     },
     removeConfirmedProduction(state, product) {
       const index = state.confirmedProductions.findIndex(item =>

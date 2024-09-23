@@ -53,7 +53,7 @@ export default {
       selectedOption: null,  // 초기값을 null로 설정
       options: '',
       optionFee: 0,
-      amount: 1,
+      amount: 0,
       flag: false,
       total: 0,
       newPrice: 0,
@@ -69,7 +69,7 @@ export default {
   methods: {
     close() {
       this.total = 0;
-      this.amount = 1;
+      this.amount = 0;
       this.newPrice = 0;
       this.selectedOption = null;
       this.$emit('close');
@@ -77,7 +77,11 @@ export default {
     addTocart() {
       if (!this.selectedOption) {
         alert("You have to choose all the options");
-      } else {
+      }
+      else if (this.amount == 0){
+        alert("You cannot add 0 to cart");
+      } 
+      else {
         const availableQuantity = this.getAvailableQuantities(this.selectedOption.type);
         if (this.amount > availableQuantity) {
           alert("Selected amount exceeds available quantity");

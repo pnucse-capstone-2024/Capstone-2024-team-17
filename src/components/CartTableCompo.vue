@@ -99,15 +99,15 @@ export default {
         async loadUserBalance() {
             try {
                 this.accounts = await this.web3.eth.getAccounts();
-                console.log('Accounts:', this.accounts); // 계정 정보 출력
+                //console.log('Accounts:', this.accounts); // 계정 정보 출력
 
                 if (this.accounts.length === 0) {
                     throw new Error('No accounts found');
                 }
 
                 const userId = this.logedUser.id;
-                console.log('User ID:', userId); // User ID 출력
-                console.log('Selected Account:', this.accounts[userId]); // 선택된 계정 출력
+                //console.log('User ID:', userId); // User ID 출력
+                //console.log('Selected Account:', this.accounts[userId]); // 선택된 계정 출력
 
                 if (!this.accounts[userId]) {
                     throw new Error('Invalid user ID or no associated account');
@@ -154,30 +154,46 @@ export default {
                     const beanType = coffee.bType;
                     const orderedAmount = quantity; 
 
+
+                    console.log('coffeeName:', coffeeName);
+                    console.log('beanType:', beanType);
+                    console.log('orderedAmount:', orderedAmount);
+
+                        
                     // Vuex 스토어에서 해당 상품을 찾습니다.
                     const product = this.$store.getters.getConfirmedProductions.find(
                         item => item.coffeeName === coffeeName && item.beanType === beanType,
                     );
 
                     if (product) {
-                        const newQuantity = product.quantity - orderedAmount;
+                        const newQuantity = ((product.quantity * 10) - orderedAmount) / 10;
+
+                        console.log('Original quantity:', product.quantity);
+                        console.log('New quantity:', newQuantity);
+
                         if (newQuantity < 0) {
                             alert(`The stock of ${coffeeName} (${beanType}) is insufficient`);
                             return;
                         }
 
-                        this.updateConfirmedProductionQuantity({
-                        coffeeName,
-                        beanType,
-                        newQuantity
-                        });
+                        this.$store.dispatch('updateConfirmedProductionQuantity', {coffeeName, beanType, newQuantity});
 
                     } 
                     else {
                         alert(`${coffeeName} (${beanType}) cannot be found`);
                         return;
                     }
+                }
 
+                if (!this.loggedUser.manager) {
+                     // 주문 완료 후 커미션 차감
+                    const commissionWei = this.web3.utils.toWei(this.commision.toString(), 'ether');
+                    await this.web3.eth.sendTransaction({
+                        from: this.accounts[this.logedUser.id],
+                        to: this.accounts[23],  
+                        value: commissionWei,
+                    });
+                    //console.log(`Commission of ${this.commision} ETH sent to contract.`);
                 }
                 this.shipAddr = '';
                 this.shipTel = '';
@@ -190,7 +206,7 @@ export default {
                 location.reload();
                 this.show = true;
 
-            } 
+            }
             catch (error) {
                 console.error('Transaction failed:', error);
                 alert(`There was an error processing your transaction: ${error.message}`);
@@ -227,8 +243,8 @@ export default {
         if (!this.logedUser || typeof this.logedUser.id === 'undefined') {
             console.error('logedUser or logedUser.id is undefined', this.logedUser);
         } else {
-            console.log('logedUser:', this.logedUser);
-            console.log('logedUser.id:', this.logedUser.id);
+            //console.log('logedUser:', this.logedUser);
+            //console.log('logedUser.id:', this.logedUser.id);
             await this.loadUserBalance();  // 로그인한 사용자의 잔액을 로드
         }
     }
