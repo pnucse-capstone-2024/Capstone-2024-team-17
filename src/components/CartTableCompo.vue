@@ -196,7 +196,6 @@ export default {
             this.logedUser.point += this.addPoint;
             this.mPoint = 0;
             sessionStorage.setItem('logeduser', JSON.stringify(this.logedUser));
-            localStorage.clear();
 
             // Alert user and redirect
             alert('Payment has been completed. You will be redirected to the homepage.');

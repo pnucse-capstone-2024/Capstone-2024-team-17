@@ -20,7 +20,7 @@
                   <aside class="productImg">{{ product[1].coffeeName }}</aside>
                   <div class="text">
                     <h3>Ξ {{ product[1].price }} / <small>100g</small></h3>
-                    <button v-if="!isSeller && !isDistributor" type="button" class="btn toModal" @click="showModal(product[1])">Select!</button>
+                    <button type="button" class="btn toModal" @click="showModal(product[1])">Select!</button>
                   </div>
                 </div>
               </div>
@@ -63,7 +63,6 @@
         web3: null,
         accounts: [],
         isSeller: false,
-        isDistributor: false
       };
     },
     methods: {
@@ -121,7 +120,6 @@
         this.fullName = this.logedUser.first_name + ' ' + this.logedUser.last_name;
         this.memberstat = this.logedUser.membership;
         this.isSeller = this.logedUser.seller;
-        this.isDistributor = this.logedUser.distributor;
       }
     },
   };
