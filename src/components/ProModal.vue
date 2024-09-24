@@ -50,7 +50,7 @@ export default {
   props: ['CoffeeOptions'],
   data() {
     return {
-      selectedOption: null,  // 초기값을 null로 설정
+      selectedOption: 'no',  // 초기값을 null로 설정
       options: '',
       optionFee: 0,
       amount: 0,
@@ -133,16 +133,19 @@ export default {
       }
     },
     getAvailableQuantities(beanType) {
-      if (!beanType) return '-';
+      console.log('ConfirmedProductions:', JSON.stringify(this.getConfirmedProductions, null, 2));
+
       const product = this.getConfirmedProductions.find(
         item =>
           item.coffeeName === this.CoffeeOptions.coffeeName &&
           item.beanType === beanType
       );
+
       if (product) {
         const quantity = product.quantity * 10; // 100g 단위로 변환
         return quantity;
       } else {
+        console.log('Product not found.');
         return '0';
       }
     },

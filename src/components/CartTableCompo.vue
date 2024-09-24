@@ -76,13 +76,9 @@ export default {
             totalPrice:0,
             commision:0,
             discountPrice:0,
-            mPoint:0,
             logedUser:'',
             loggedUser: JSON.parse(sessionStorage.getItem('logeduser')),
             userBalance: 0,
-            pointFlag:true,
-            totalPoint:0,
-            tmpPoint:0,
             shipAddr:'',
             shipTel:'',
             chBox:false,
@@ -132,86 +128,88 @@ export default {
         },
 
 
-        async orderFunc() {
-            try {
-                // 각 커피 항목에 대해 트랜잭션 수행
-                for (let [coffeeId, coffee] of this.coffeeItems.entries()) {
-                    const quantity = coffee.amount;
-                    const coffeeIndex = parseInt(coffeeId);
-                    const totalUnitPrice = coffee.totalCal(coffee.bType); // 총 가격 계산 (ETH로)
-                    const totalUnitPriceWei = this.web3.utils.toWei(totalUnitPrice.toString(), 'ether');
+    async orderFunc() {
+        try {
+            const itemsToRemove = [];  // Array to store the coffee IDs to remove
 
-                    // 트랜잭션 발생
-                    await this.contract.methods.purchaseCoffee(coffeeIndex, quantity).send({
-                        from: this.accounts[this.logedUser.id],
-                        to: this.accounts[coffeeIndex + 10],  // 각 coffeeId에 맞는 주소로 송금
-                        value: totalUnitPriceWei,
-                    });
+            // 각 커피 항목에 대해 트랜잭션 수행
+            for (let [coffeeId, coffee] of this.coffeeItems.entries()) {
+                const quantity = coffee.amount;
+                const coffeeIndex = parseInt(coffeeId);
+                const totalUnitPrice = coffee.totalCal(coffee.bType); // 총 가격 계산 (ETH로)
+                const totalUnitPriceWei = this.web3.utils.toWei(totalUnitPrice.toString(), 'ether');
 
-                    // 주문한 수량만큼 재고 감소
-                    // 커피 이름과 타입을 가져옵니다.
-                    const coffeeName = coffee.coffeeName;
-                    const beanType = coffee.bType;
-                    const orderedAmount = quantity; 
+                // 트랜잭션 발생
+                await this.contract.methods.purchaseCoffee(coffeeIndex, quantity).send({
+                    from: this.accounts[this.logedUser.id],
+                    to: this.accounts[coffeeIndex + 10],  // 각 coffeeId에 맞는 주소로 송금
+                    value: totalUnitPriceWei,
+                });
 
+                // 주문한 수량만큼 재고 감소
+                const coffeeName = coffee.coffeeName;
+                const beanType = coffee.bType;
+                const orderedAmount = quantity;
+                const product = this.$store.getters.getConfirmedProductions.find(
+                    item => item.coffeeName === coffeeName && item.beanType === beanType,
+                );
 
-                    console.log('coffeeName:', coffeeName);
-                    console.log('beanType:', beanType);
-                    console.log('orderedAmount:', orderedAmount);
-
-                        
-                    // Vuex 스토어에서 해당 상품을 찾습니다.
-                    const product = this.$store.getters.getConfirmedProductions.find(
-                        item => item.coffeeName === coffeeName && item.beanType === beanType,
-                    );
-
-                    if (product) {
-                        const newQuantity = ((product.quantity * 10) - orderedAmount) / 10;
-
-                        console.log('Original quantity:', product.quantity);
-                        console.log('New quantity:', newQuantity);
-
-                        if (newQuantity < 0) {
-                            alert(`The stock of ${coffeeName} (${beanType}) is insufficient`);
-                            return;
-                        }
-
-                        this.$store.dispatch('updateConfirmedProductionQuantity', {coffeeName, beanType, newQuantity});
-
-                    } 
-                    else {
-                        alert(`${coffeeName} (${beanType}) cannot be found`);
+                if (product) {
+                    const newQuantity = ((product.quantity * 10) - orderedAmount) / 10;
+                    if (newQuantity < 0) {
+                        alert(`The stock of ${coffeeName} (${beanType}) is insufficient`);
                         return;
                     }
-                }
 
-                if (!this.loggedUser.manager) {
-                     // 주문 완료 후 커미션 차감
-                    const commissionWei = this.web3.utils.toWei(this.commision.toString(), 'ether');
-                    await this.web3.eth.sendTransaction({
-                        from: this.accounts[this.logedUser.id],
-                        to: this.accounts[23],  
-                        value: commissionWei,
+                    this.$store.dispatch('updateConfirmedProductionQuantity', {
+                        coffeeName: coffeeName, 
+                        beanType: beanType, 
+                        newQuantity: newQuantity
                     });
-                    //console.log(`Commission of ${this.commision} ETH sent to contract.`);
+                } else {
+                    alert(`${coffeeName} (${beanType}) cannot be found`);
+                    return;
                 }
-                this.shipAddr = '';
-                this.shipTel = '';
-                this.chBox = false;
-                this.logedUser.point -= this.mPoint;
-                this.logedUser.point += this.addPoint;
-                this.mPoint = 0;
-                sessionStorage.setItem('logeduser', JSON.stringify(this.logedUser));
-                localStorage.clear();
-                location.reload();
-                this.show = true;
 
+                // Add the coffee ID to the list of items to remove
+                itemsToRemove.push(coffee.pId);
             }
-            catch (error) {
-                console.error('Transaction failed:', error);
-                alert(`There was an error processing your transaction: ${error.message}`);
+
+            if (!this.loggedUser.manager) {
+                const commissionWei = this.web3.utils.toWei(this.commision.toString(), 'ether');
+                await this.web3.eth.sendTransaction({
+                    from: this.accounts[this.logedUser.id],
+                    to: this.accounts[23],  
+                    value: commissionWei,
+                });
             }
+
+            // Remove all purchased items from the cart after the transaction is completed
+            itemsToRemove.forEach(coffeeId => {
+                this.remItem(coffeeId);  // Remove item by its pId
+            });
+
+            this.shipAddr = '';
+            this.shipTel = '';
+            this.chBox = false;
+            this.logedUser.point -= this.mPoint;
+            this.logedUser.point += this.addPoint;
+            this.mPoint = 0;
+            sessionStorage.setItem('logeduser', JSON.stringify(this.logedUser));
+            localStorage.clear();
+
+            // Alert user and redirect
+            alert('Payment has been completed. You will be redirected to the homepage.');
+            this.$router.push({ name: 'home-page' });
+
+            this.show = true;
+
+        } catch (error) {
+            console.error('Transaction failed:', error);
+            alert(`There was an error processing your transaction: ${error.message}`);
+        }
     }
+
 
     },
     watch:{

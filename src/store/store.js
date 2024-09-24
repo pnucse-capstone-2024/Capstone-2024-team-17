@@ -36,11 +36,17 @@ export const store = createStore({
       }
     },
     updateConfirmedProductionQuantity(state, { coffeeName, beanType, newQuantity }) {
+      console.log('Updating confirmed production quantity:', coffeeName, beanType, newQuantity); // 전달된 값 출력
       const product = state.confirmedProductions.find(
         item => item.coffeeName === coffeeName && item.beanType === beanType
       );
       if (product) {
+        console.log('Found product:', product); // 찾은 상품 출력
         product.quantity = newQuantity;
+        console.log('Updated product quantity:', product); // 업데이트된 수량 출력
+      }
+      else {
+        console.log('Product not found'); // 상품을 찾지 못한 경우 출력
       }
     }
   },
