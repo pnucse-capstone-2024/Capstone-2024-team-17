@@ -69,9 +69,9 @@ export default {
   methods: {
     close() {
       this.total = 0;
-      this.amount = 0;
+      this.amount = 1;
       this.newPrice = 0;
-      this.selectedOption = null;
+      this.selectedOption = 'no';
       this.$emit('close');
     },
     addTocart() {
@@ -95,7 +95,7 @@ export default {
           );
           this.total = 0;
           this.amount = 1;
-          this.selectedOption = null;
+          this.selectedOption = 'no';
           this.flag = false;
           this.$emit('close');
           this.$emit('cartAdding', addCart);

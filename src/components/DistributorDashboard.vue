@@ -8,7 +8,7 @@
       <div class="option-selector">
         <select v-model="selectedOption" id="options">
           <option value="production">Production</option>
-          <option value="shipping">Shipping</option>
+          <option value="Order Info">Order Info</option>
         </select>
       </div>
 
@@ -32,8 +32,8 @@
         </div>
 
         <!-- 배송 정보 입력 화면 -->
-        <div v-if="selectedOption === 'shipping'">
-          <h3>Enter Shipping Information</h3>
+        <div v-if="selectedOption === 'Order Info'">
+          <h3>Order Information</h3>
           <form @submit.prevent="submitShippingInfo">
             <div>
               <label for="shippingAddress">Shipping Address:</label>
