@@ -5,7 +5,7 @@
         </aside>
         <ul v-if="sesssionCheck">
             <li><router-link to='/home'>Home</router-link></li>
-            <li><router-link to='/products'>Products</router-link></li>
+            <li><a href="/products" @click.prevent="goToProducts">Products</a></li>
             <li v-if="!isSeller && !isDistributor"><router-link to='/recipe'>Recipes</router-link></li>
             <li><router-link to='/membership'>Membership</router-link></li>
             <li v-if="!isSeller && !isDistributor"><router-link to='/shoppingcart'>Shopping Cart</router-link></li>
@@ -15,7 +15,7 @@
         <ul v-else>
             <li><router-link v-show="!user" to='/login'>Login</router-link></li>
             <li><router-link to='/home'>Home</router-link></li>
-            <li><router-link to='/products'>Products</router-link></li>
+            <li><a href="/products" @click.prevent="goToProducts">Products</a></li>
         </ul>
         <article>
             <form v-if="sesssionCheck">
@@ -50,6 +50,11 @@ export default {
         },
         redirectToCheckout() {
             this.$router.push({ name: 'shopping-cart' });
+        },
+        goToProducts() {
+            this.$router.push('/products').then(() => {
+                window.location.reload();  // 페이지를 새로고침
+            });
         }
     },
     mounted() {

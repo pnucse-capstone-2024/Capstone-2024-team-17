@@ -192,9 +192,7 @@ export default {
             this.shipAddr = '';
             this.shipTel = '';
             this.chBox = false;
-            this.logedUser.point -= this.mPoint;
-            this.logedUser.point += this.addPoint;
-            this.mPoint = 0;
+
             sessionStorage.setItem('logeduser', JSON.stringify(this.logedUser));
 
             // Alert user and redirect

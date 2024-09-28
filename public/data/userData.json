@@ -24,7 +24,7 @@
     {"id":21,"first_name":"Victor","last_name":"Adams","username":"victora","email":"victor.adams@admin.com","password":"adminpass12","membership":true,"seller":true,"distributor":false,"manager":false},
 
 
-    {"id":22,"first_name":"CoffeeAndCom","last_name":"Company","username":"cac","email":"asdf1234@naver.com","password":"cac","membership":true,"seller":false,"distributor":true,"manager":true},
-    {"id":23,"first_name":"Juyeong","last_name":"Jo","username":"sante0926","email":"chojuyoung0926@naver.com","password":"whwndud1357!","membership":true,"seller":false,"distributor":false,"manager":false}
+    {"id":22,"first_name":"CoffeeAndCom","last_name":"Company","username":"cac","email":"asdf1234@naver.com","password":"cac","membership":true,"seller":false,"distributor":true,"manager":false},
+    {"id":23,"first_name":"Juyeong","last_name":"Jo","username":"sante0926","email":"chojuyoung0926@naver.com","password":"whwndud1357!","membership":true,"seller":false,"distributor":false,"manager":true}
 ]
 
