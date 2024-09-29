@@ -11,10 +11,18 @@
                 <h3 v-show="memberstat">Membership: Full Member | ETH(Ξ): {{ userBalance }}</h3>
                 <h3 v-show="!memberstat">Membership: None</h3>
               </article>
+
               <article v-if="isSeller">
                 <button class="manageProduct" @click="manageProduct()">Register Production Volume</button>
               </article>
+
+              <article v-else-if="isManager">
+                <button class="clearLocalStorage" @click="clearLocalStorage()">Clear Product Data</button>
+              </article>
+
               <h2>Products Page</h2>
+              <p><strong>Note: Only one option per coffee bean type can be selected. </strong></p>
+
               <div class="coffeePage">
                 <div class="coffeeBox" v-for="(product, idx) in coffeeList" :key="idx">
                   <aside class="productImg">{{ product[1].coffeeName }}</aside>
@@ -63,9 +71,18 @@
         web3: null,
         accounts: [],
         isSeller: false,
+        isManager: false
       };
     },
     methods: {
+      clearLocalStorage() {
+        if (confirm("Are you sure you want to clear all data?")) {
+          this.$store.dispatch('clearConfirmedProductions');
+          alert("All product data has been cleared.");
+          window.location.reload();
+        }
+      },
+    
       async loadUserBalance() {
         try {
           this.accounts = await this.web3.eth.getAccounts();
@@ -120,6 +137,7 @@
         this.fullName = this.logedUser.first_name + ' ' + this.logedUser.last_name;
         this.memberstat = this.logedUser.membership;
         this.isSeller = this.logedUser.seller;
+        this.isManager = this.logedUser.manager;
       }
     },
   };
@@ -139,6 +157,14 @@ h3{
     border: 1px solid black;
     border-radius: 10px;
     padding: 2%;
+}
+p{
+  font-family: 'Times New Roman', Times, serif;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  margin-bottom: 20px; /* 아래쪽 공백 */
 }
 .content{
     background: #C69B7B;
@@ -168,6 +194,13 @@ h3{
 }
 
 .manageProduct{
+    padding: 1%;
+    font-weight: 700;
+    border-radius: 8px;
+    cursor: pointer; 
+}
+
+.clearLocalStorage{
     padding: 1%;
     font-weight: 700;
     border-radius: 8px;

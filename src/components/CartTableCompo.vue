@@ -35,7 +35,7 @@
             <section>
                 <ul v-for="(coffee,idx) in coffeeItems" :key="idx">
                     <li>
-                        <p><span style="margin-left: 10px;">{{coffee[1].coffeeName}}</span> x {{coffee[1].amount}}(100g)</p>
+                        <p><span style="margin-left: 10px;">{{coffee[1].coffeeName}}</span> x {{coffee[1].amount}}(100g, {{coffee[1].bType}})</p>
                     </li>
                 </ul>
                 <section>

@@ -55,22 +55,24 @@ export default {
     },
     
     saveProduction() {
-      if (this.coffeeBeanType && this.productionQty > 0) {
-        const productionData = {
-          beanType: this.coffeeBeanType,
-          quantity: this.productionQty,
-          coffeeName: this.coffeeName
-        };
+      if (confirm("Are you sure you want to save your product?")) {
+        if (this.coffeeBeanType && this.productionQty > 0) {
+          const productionData = {
+            beanType: this.coffeeBeanType,
+            quantity: this.productionQty,
+            coffeeName: this.coffeeName
+          };
 
-        // Vuex에 저장
-        this.$store.commit('addProduction', productionData);
+          // Vuex에 저장
+          this.$store.commit('addProduction', productionData);
 
-        console.log(this.$store.state);
-        // 페이지 이동
-        this.$router.push({ name: 'products-page' });
-      } 
-      else {
-        alert("Please select a coffee type or enter a valid production quantity.");
+          alert("The production volume has been successfully saved. The distributor will review and confirm it.");
+          // 페이지 이동
+          this.$router.push({ name: 'products-page' });
+        } 
+        else {
+          alert("Please select a coffee type or enter a valid production quantity.");
+        }
       }
     },
 

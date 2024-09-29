@@ -12,12 +12,12 @@
         <aside class="coffeeImg">{{ CoffeeOptions.coffeeName }}</aside>
         <div class="bodytest" name="body">
           <h2>{{ CoffeeOptions.coffeeName }}</h2>
-          <h3>Price : Ξ {{ amount * newPrice }} / <small>{{ amount * 100 }}g</small></h3>
+          <h3>Price : Ξ {{ (amount > 0 ? amount : 1) * newPrice }} / <small>{{ (amount > 0 ? amount : 1) * 100 }}g</small></h3>
 
           <div class="modal_main">
             <div class="right">
               <div>
-                <select v-model="selectedOption" @change="totalCh()" class="table-primary form-control">
+                <select v-model="selectedOption" @change="resetAmount" class="table-primary form-control">
                   <option value="no" selected disabled>Select your Coffee Bean Type</option>
                   <option v-for="(option, idx) in options" :key="idx" :value="option">
                     {{ option.type }} ({{ getAvailableQuantities(option.type) }} available)
@@ -26,7 +26,7 @@
               </div>
               <div>
                 <span v-show="!flag"> weight(100g) :</span>
-                <input min="1" :max="getAvailableQuantities(selectedOption ? selectedOption.type : null)" v-show="!flag" type="number" v-model.number="amount" @change="totalCh()">
+                <input min="0" :max="getAvailableQuantities(selectedOption ? selectedOption.type : null)" v-show="!flag" type="number" v-model.number="amount" @change="totalCh()">
               </div>
             </div>
           </div>
@@ -67,9 +67,13 @@ export default {
     ...mapGetters(['getConfirmedProductions']),
   },
   methods: {
+    resetAmount() {
+      this.amount = 0; // 선택 옵션 변경 시 amount를 0으로 설정
+      this.totalCh(); // 선택 변경 후 총합을 다시 계산
+    },
     close() {
       this.total = 0;
-      this.amount = 1;
+      this.amount = 0;
       this.newPrice = 0;
       this.selectedOption = 'no';
       this.$emit('close');
@@ -94,7 +98,7 @@ export default {
             "", "", this.selectedOption.type, "", "", this.amount
           );
           this.total = 0;
-          this.amount = 1;
+          this.amount = 0;
           this.selectedOption = 'no';
           this.flag = false;
           this.$emit('close');

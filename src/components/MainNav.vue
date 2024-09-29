@@ -8,7 +8,7 @@
             <li><a href="/products" @click.prevent="goToProducts">Products</a></li>
             <li v-if="!isSeller && !isDistributor"><router-link to='/recipe'>Recipes</router-link></li>
             <li><router-link to='/membership'>Membership</router-link></li>
-            <li v-if="!isSeller && !isDistributor"><router-link to='/shoppingcart'>Shopping Cart</router-link></li>
+            <li v-if="!isSeller && !isDistributor && !isManager"><router-link to='/shoppingcart'>Shopping Cart</router-link></li>
             <li v-if="!isSeller && !isDistributor"><router-link to='/shippinginfo'>Shipping Info</router-link></li>
             <li v-if="isDistributor"><router-link to='/distributordashboard'>Distributor Dashboard</router-link></li>
         </ul>
@@ -24,7 +24,7 @@
             <form v-else>
                 <button v-show="user" @click="logout">Logout</button>
             </form>
-            <figure v-if="sesssionCheck && !isDistributor && !isSeller" @click="redirectToCheckout"><div>{{cartAdd.size}}</div></figure>
+            <figure v-if="sesssionCheck && !isDistributor && !isSeller && !isManager" @click="redirectToCheckout"><div>{{cartAdd.size}}</div></figure>
         </article>
     </nav>
 </template>
@@ -39,7 +39,8 @@ export default {
             displayName: '',
             sesssionCheck: false,
             isSeller: false,
-            isDistributor: false
+            isDistributor: false,
+            isManager: false
         };
     },
     methods: {
@@ -52,9 +53,14 @@ export default {
             this.$router.push({ name: 'shopping-cart' });
         },
         goToProducts() {
-            this.$router.push('/products').then(() => {
-                window.location.reload();  // 페이지를 새로고침
-            });
+            if (this.isSeller || this.isDistributor|| this.isManager) {
+                this.$router.push('/products').then(() => {
+                    window.location.reload();  // 페이지를 새로고침
+                });
+            }
+            else {
+                this.$router.push('/products')
+            }
         }
     },
     mounted() {
@@ -63,6 +69,7 @@ export default {
             this.sesssionCheck = true;
             this.isDistributor = this.logedUser.distributor;
             this.isSeller = this.logedUser.seller;
+            this.isManager = this.logedUser.manager;
             console.log(this.isDistributor);
         }
     }
