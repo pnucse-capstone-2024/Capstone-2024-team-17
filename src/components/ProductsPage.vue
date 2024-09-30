@@ -106,7 +106,7 @@
       },
       showModal(val) {
         this.isModalVisible = true;
-        let coffeeOject = new productClass(val.pId, val.coffeeName, val.price, val.description, '', '', '', 1);
+        let coffeeOject = new productClass(val.pId, val.coffeeName, val.price, val.description, '', '', '', 0);
         this.getProduct = coffeeOject;
         
       },
