@@ -21,7 +21,6 @@
               </article>
 
               <h2>Products Page</h2>
-              <p><strong>Note: Only one option per coffee bean type can be selected. </strong></p>
 
               <div class="coffeePage">
                 <div class="coffeeBox" v-for="(product, idx) in coffeeList" :key="idx">

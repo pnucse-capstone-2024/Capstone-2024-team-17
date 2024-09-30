@@ -5,7 +5,7 @@ export const store = createStore({
   state: {
     coffeeProductions: [], // Seller가 입력한 데이터를 저장
     confirmedProductions: [],
-    shoppingCart: [] // ordered
+    shoppingCart: {}
   },
   mutations: {
     // production
@@ -57,12 +57,20 @@ export const store = createStore({
       state.confirmedProductions = []; // confirmedProductions 배열 초기화
     },
 
-    // shopping cart (ordered)
-    addShoppingCart(state, production) {
-      state.shoppingCart.push(production); // 데이터 추가
+    // shopping cart
+    addShoppingCart(state, { userId, production }) {
+      if (!state.shoppingCart[userId]) {
+        state.shoppingCart[userId] = [];
+      }
+      state.shoppingCart[userId].push(production);
     },
-    removeShoppingCart(state, index) {
-      state.shoppingCart.splice(index, 1); // 인덱스에 해당하는 데이터를 제거
+    removeShoppingCart(state, { userId, index }) {
+      if (state.shoppingCart[userId]) {
+        state.shoppingCart[userId].splice(index, 1);
+      }
+    },
+    clearShoppingCart(state, userId) {
+      state.shoppingCart[userId] = [];
     },
   },
   actions: {
@@ -85,12 +93,15 @@ export const store = createStore({
     clearConfirmedProductions({ commit }) {
       commit('clearConfirmedProductions'); // confirmedProductions 배열을 초기화하는 mutation 호출
     },
-    // ordered data
-    addCoffeeShoppingCart({ commit }, production) {
-      commit('addShoppingCart', production);
+    
+    addCoffeeShoppingCart({ commit }, { userId, production }) {
+      commit('addShoppingCart', { userId, production });
     },
-    deleteCoffeeShoppingCart({ commit }, index) {
-      commit('removeShoppingCart', index);
+    deleteCoffeeShoppingCart({ commit }, { userId, index }) {
+      commit('removeShoppingCart', { userId, index });
+    },
+    clearCoffeeShoppingCart({ commit }, userId) {
+      commit('clearShoppingCart', userId);
     },
   },
   getters: {
@@ -100,9 +111,9 @@ export const store = createStore({
     getConfirmedProductions: state => {
       return state.confirmedProductions; // 모든 데이터 조회
     },
-    getShoppingCart: state => {
-      return state.shoppingCart; // ordered data
-    }
+    getShoppingCart: (state) => (userId) => {
+      return state.shoppingCart[userId] || [];
+    },
   },
   plugins: [createPersistedState()] // vuex-persistedstate 플러그인 추가
 });

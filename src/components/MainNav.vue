@@ -24,12 +24,15 @@
             <form v-else>
                 <button v-show="user" @click="logout">Logout</button>
             </form>
-            <figure v-if="sesssionCheck && !isDistributor && !isSeller && !isManager" @click="redirectToCheckout"><div>{{cartAdd.size}}</div></figure>
+            <figure v-if="sesssionCheck && !isDistributor && !isSeller && !isManager" @click="redirectToCheckout"><div>{{userShoppingCart.length}}</div></figure>
         </article>
     </nav>
 </template>
 
 <script>
+
+import { mapGetters } from 'vuex';
+
 export default {
     name: 'MainNav',
     props: ['user', 'user2', 'cartAdd'],
@@ -43,6 +46,15 @@ export default {
             isManager: false
         };
     },
+
+    computed: {
+        ...mapGetters(['getShoppingCart']),
+        userShoppingCart() {
+            const userId = this.logedUser.id;
+            return this.getShoppingCart(userId);
+        },
+    },
+
     methods: {
         logout() {
             sessionStorage.removeItem('logeduser');
@@ -53,14 +65,10 @@ export default {
             this.$router.push({ name: 'shopping-cart' });
         },
         goToProducts() {
-            if (this.isSeller || this.isDistributor|| this.isManager) {
-                this.$router.push('/products').then(() => {
-                    window.location.reload();  // 페이지를 새로고침
-                });
-            }
-            else {
-                this.$router.push('/products')
-            }
+            this.$router.push('/products').then(() => {
+                window.location.reload();  // 페이지를 새로고침
+            });
+
         }
     },
     mounted() {

@@ -1,7 +1,7 @@
 <template>
     <div>
         <table>
-            <thead v-if="this.coffeeItems.size!=0">
+            <thead v-if="userShoppingCart.length !== 0">
                 <tr>
                     <th>Product</th>
                     <th>Origin</th>
@@ -14,17 +14,17 @@
                 </tr>
             </thead>
             <tbody>
-                <tr v-for="(coffee,idx) in coffeeItems" :key="idx">
-                    <td scope="row">{{coffee[1].coffeeName}}</td>
-                    <td v-if="coffee[1].origin !== ''">{{coffee[1].origin}}</td>
-                    <td v-if="coffee[1].origin === ''">-</td>
-                    <td v-if="coffee[1].pDay !== ''">{{coffee[1].pDay}}</td>
-                    <td v-if="coffee[1].pDay === ''">-</td>
-                    <td v-if="coffee[1].bType !== ''">{{coffee[1].bType}}</td>
-                    <td>{{coffee[1].eachPrice(coffee[1].bType)}}</td>
-                    <td>{{coffee[1].amount}}</td>
-                    <td>{{coffee[1].totalCal(coffee[1].bType)}}</td>
-                    <td><button @click="remItem(coffee[1].pId)">x</button></td>
+                <tr v-for="(coffee, idx) in userShoppingCart" :key="idx">
+                <td scope="row">{{ coffee.coffeeName }}</td>
+                <td v-if="coffee.origin !== ''">{{ coffee.origin }}</td>
+                <td v-else>-</td>
+                <td v-if="coffee.pDay !== ''">{{ coffee.pDay }}</td>
+                <td v-else>-</td>
+                <td v-if="coffee.bType !== ''">{{ coffee.bType }}</td>
+                <td>{{ calculateEachPrice(coffee.price, coffee.bType) }}</td>
+                <td>{{ coffee.amount }}</td>
+                <td>{{ calculateWhole(coffee.price, coffee.bType, coffee.amount) }}</td>
+                <td><button @click="remItem(coffee.pId, coffee.bType)">x</button></td>
                 </tr>
             </tbody>
         </table>
@@ -33,9 +33,9 @@
                 <h2 style="margin-top: 40px; margin-left: -6%;">Order Details</h2>
             </article>
             <section>
-                <ul v-for="(coffee,idx) in coffeeItems" :key="idx">
+                <ul v-for="(coffee,idx) in userShoppingCart" :key="idx">
                     <li>
-                        <p><span style="margin-left: 10px;">{{coffee[1].coffeeName}}</span> x {{coffee[1].amount}}(100g, {{coffee[1].bType}})</p>
+                        <p><span style="margin-left: 10px;">{{coffee.coffeeName}}</span> x {{coffee.amount}}(100g, {{coffee.bType}})</p>
                     </li>
                 </ul>
                 <section>
@@ -60,172 +60,219 @@
         </div>
     </div>
 </template>
-<script>
 
+<script>
 import Web3 from 'web3';
 import CoffeeContract from '../abi/PaymentContract.json';
-import { mapActions } from 'vuex';
+import { mapActions, mapGetters } from 'vuex';
 
 export default {
-    name:'CartTableCompo',
-    props:['cartList'],
-    data(){
-        return{
-            coffeeItems:this.cartList,
-            subTotal:0,
-            totalPrice:0,
-            commision:0,
-            discountPrice:0,
-            logedUser:'',
+    name: 'CartTableCompo',
+    data() {
+        return {
+            subTotal: 0,
+            totalPrice: 0,
+            commision: 0,
+            discountPrice: 0,
+            logedUser: '',
             loggedUser: JSON.parse(sessionStorage.getItem('logeduser')),
+            userID: 0,
             userBalance: 0,
-            shipAddr:'',
-            shipTel:'',
-            chBox:false,
+            shipAddr: '',
+            shipTel: '',
+            chBox: false,
             show: false,
             web3: null,
             contract: null,
             accounts: [],
-            contractAddress: '0xa6A96Be3f5CbBCa1Edf1533c8A3e3b61A2b1a2eD' // released contract address through Remix IDE
+            contractAddress: '0xa6A96Be3f5CbBCa1Edf1533c8A3e3b61A2b1a2eD' 
         }
     },
-    methods:{
-        ...mapActions(['updateConfirmedProductionQuantity']),
+
+    computed: {
+        ...mapGetters(['getShoppingCart']),
+        userShoppingCart() {
+            const userId = this.logedUser.id;
+            return this.getShoppingCart(userId);
+        },
+    },
+
+    methods: {
+        ...mapActions(['updateConfirmedProductionQuantity', 'deleteCoffeeShoppingCart', 'clearCoffeeShoppingCart']),
+        
+        calculateOptionFee(feeType) {
+            switch (feeType) {
+                case 'Whole beans':
+                    return 0;
+                case 'Ground':
+                    return 1;
+                case 'Drip Package':
+                    return 2;
+                case 'Capsule':
+                    return 3;
+                default:
+                    return 0;
+            }
+        },
+        calculateEachPrice(price, feeType) {
+            const optionFee = this.calculateOptionFee(feeType);
+            return (price + optionFee).toFixed(2);
+        },
+        calculateWhole(price, feeType, amount) {
+            const eachPrice = this.calculateEachPrice(price, feeType);
+            return (eachPrice * amount).toFixed(2);
+        },
+        calculateDiscount(price, feeType, amount) {
+            const eachPrice = this.calculateEachPrice(price, feeType);
+            let discountRate = 0;
+            if (amount > 9) {
+                discountRate = 0.10;
+            } else if (amount > 4) {
+                discountRate = 0.05;
+            }
+            const discount = (eachPrice * amount * discountRate).toFixed(2);
+            return discount;
+        },
         
         async loadUserBalance() {
             try {
                 this.accounts = await this.web3.eth.getAccounts();
-                //console.log('Accounts:', this.accounts); // 계정 정보 출력
-
                 if (this.accounts.length === 0) {
                     throw new Error('No accounts found');
                 }
-
                 const userId = this.logedUser.id;
-                //console.log('User ID:', userId); // User ID 출력
-                //console.log('Selected Account:', this.accounts[userId]); // 선택된 계정 출력
-
                 if (!this.accounts[userId]) {
                     throw new Error('Invalid user ID or no associated account');
                 }
-
                 const balance = await this.web3.eth.getBalance(this.accounts[userId]);
                 this.userBalance = parseFloat(this.web3.utils.fromWei(balance, 'ether')).toFixed(2); // 잔액을 ETH로 변환하여 소수점 4자리까지만 표시
-            } catch (error) {
+            } 
+            catch (error) {
                 console.error('Error fetching ETH balance:', error.message);
             }
         },
-        remItem(pid){
-            // console.log(pid);
-            this.totalPrice = 0;
-            this.discountPrice = 0;
-            this.$emit("remItem",pid);
+
+        remItem(pid, bType) {
+            const userId = this.logedUser.id;
+            const shoppingCart = this.getShoppingCart(userId);
+
+            const index = shoppingCart.findIndex((item) => item.pId === pid && item.bType === bType);
+            if (index !== -1) {
+                this.deleteCoffeeShoppingCart({ userId, index });
+                this.totalPrice = 0;
+                this.discountPrice = 0;
+            }
         },
-        goHome(){
-            this.$router.push({
-                name:'products-page'
-            })
+
+        goHome() {
+            this.$router.push({ name: 'products-page' });
         },
 
+        async orderFunc() {
+            const userId = this.logedUser.id;
+            const shoppingCart = this.getShoppingCart(userId);
 
-    async orderFunc() {
-        try {
-            const itemsToRemove = [];  // Array to store the coffee IDs to remove
+            if (!this.chBox) {
+                alert("Please agree to the terms and conditions.");
+                return;
+            }
 
-            // 각 커피 항목에 대해 트랜잭션 수행
-            for (let [coffeeId, coffee] of this.coffeeItems.entries()) {
-                const quantity = coffee.amount;
-                const coffeeIndex = parseInt(coffeeId);
-                const totalUnitPrice = coffee.totalCal(coffee.bType); // 총 가격 계산 (ETH로)
-                const totalUnitPriceWei = this.web3.utils.toWei(totalUnitPrice.toString(), 'ether');
+            if (shoppingCart.length == 0) {
+                alert("Please add your product.");
+                return;
+            }
 
-                // 트랜잭션 발생
-                await this.contract.methods.purchaseCoffee(coffeeIndex, quantity).send({
-                    from: this.accounts[this.logedUser.id],
-                    to: this.accounts[coffeeIndex + 10],  // 각 coffeeId에 맞는 주소로 송금
-                    value: totalUnitPriceWei,
-                });
+            try {
+                for (let coffee of shoppingCart) {
+                    const quantity = coffee.amount;
+                    const coffeeIndex = parseInt(coffee.pId); // pId를 정수로 변환하여 사용
+                    const totalUnitPrice = this.calculateWhole(coffee.price, coffee.bType, coffee.amount);
+                    const totalUnitPriceWei = this.web3.utils.toWei(totalUnitPrice.toString(), 'ether');
 
-                // 주문한 수량만큼 재고 감소
-                const coffeeName = coffee.coffeeName;
-                const beanType = coffee.bType;
-                const orderedAmount = quantity;
-                const product = this.$store.getters.getConfirmedProductions.find(
-                    item => item.coffeeName === coffeeName && item.beanType === beanType,
-                );
+                    // 스마트 컨트랙트 메서드 호출로 트랜잭션을 발생시킵니다.
+                    await this.contract.methods.purchaseCoffee(coffeeIndex, quantity).send({
+                        from: this.accounts[this.logedUser.id],
+                        to: this.accounts[coffeeIndex + 10],
+                        value: totalUnitPriceWei,
+                    });
 
-                if (product) {
-                    const newQuantity = ((product.quantity * 10) - orderedAmount) / 10;
-                    if (newQuantity < 0) {
-                        alert(`The stock of ${coffeeName} (${beanType}) is insufficient`);
+                    // 주문한 수량만큼 재고 감소 처리
+                    const coffeeName = coffee.coffeeName;
+                    const beanType = coffee.bType;
+                    const orderedAmount = quantity;
+                    const product = this.$store.getters.getConfirmedProductions.find(
+                        (item) => item.coffeeName === coffeeName && item.beanType === beanType
+                    );
+
+                    if (product) {
+                        const newQuantity = ((product.quantity * 10) - orderedAmount) / 10;
+                        if (newQuantity < 0) {
+                            alert(`The stock of ${coffeeName} (${beanType}) is insufficient`);
+                            return;
+                        }
+
+                        // Vuex의 action을 사용하여 재고 수량을 업데이트합니다.
+                        this.updateConfirmedProductionQuantity({
+                            coffeeName: coffeeName,
+                            beanType: beanType,
+                            newQuantity: newQuantity,
+                        });
+                    } else {
+                        alert(`${coffeeName} (${beanType}) cannot be found`);
                         return;
                     }
-
-                    this.$store.dispatch('updateConfirmedProductionQuantity', {
-                        coffeeName: coffeeName, 
-                        beanType: beanType, 
-                        newQuantity: newQuantity
-                    });
-                } else {
-                    alert(`${coffeeName} (${beanType}) cannot be found`);
-                    return;
                 }
 
-                // Add the coffee ID to the list of items to remove
-                itemsToRemove.push(coffee.pId);
+                if (!this.loggedUser.manager) {
+                    const commissionWei = this.web3.utils.toWei(this.commision.toString(), 'ether');
+                    await this.web3.eth.sendTransaction({
+                        from: this.accounts[this.logedUser.id],
+                        to: this.accounts[23],
+                        value: commissionWei,
+                    });
+                }
+
+                // 모든 구매가 완료된 후 장바구니에서 아이템을 제거합니다.
+                this.clearCoffeeShoppingCart(userId);
+
+                // 주문 정보 초기화
+                this.shipAddr = '';
+                this.shipTel = '';
+                this.chBox = false;
+
+                sessionStorage.setItem('logeduser', JSON.stringify(this.logedUser));
+
+                // 결제 완료 후 알림 및 페이지 이동
+                alert('Payment has been completed. You will be redirected to the homepage.');
+                this.$router.push({ name: 'home-page' });
+
+                this.show = true;
+            } 
+            catch (error) {
+                console.error('Transaction failed:', error);
+                alert(`There was an error processing your transaction: ${error.message}`);
             }
-
-            if (!this.loggedUser.manager) {
-                const commissionWei = this.web3.utils.toWei(this.commision.toString(), 'ether');
-                await this.web3.eth.sendTransaction({
-                    from: this.accounts[this.logedUser.id],
-                    to: this.accounts[23],  
-                    value: commissionWei,
-                });
-            }
-
-            // Remove all purchased items from the cart after the transaction is completed
-            itemsToRemove.forEach(coffeeId => {
-                this.remItem(coffeeId);  // Remove item by its pId
-            });
-
-            this.shipAddr = '';
-            this.shipTel = '';
-            this.chBox = false;
-
-            sessionStorage.setItem('logeduser', JSON.stringify(this.logedUser));
-
-            // Alert user and redirect
-            alert('Payment has been completed. You will be redirected to the homepage.');
-            this.$router.push({ name: 'home-page' });
-
-            this.show = true;
-
-        } catch (error) {
-            console.error('Transaction failed:', error);
-            alert(`There was an error processing your transaction: ${error.message}`);
-        }
-    }
-
-
+        },
     },
-    watch:{
-        coffeeItems:{
-            handler(){
-                this.coffeeItems.forEach((value)=>{
-                    this.totalPrice += parseFloat(value.totalCal(value.bType));
-                    this.discountPrice += parseFloat(value.discount(value.amount, value.bType));
-                })
+
+    watch: {
+        userShoppingCart: {
+            handler() {
+                this.totalPrice = 0;
+                this.discountPrice = 0;
+                this.userShoppingCart.forEach((coffee) => {
+                    this.totalPrice += parseFloat(this.calculateWhole(coffee.price, coffee.bType, coffee.amount));
+                    this.discountPrice += parseFloat(this.calculateDiscount(coffee.price, coffee.bType, coffee.amount));
+                });
                 if (this.loggedUser.manager) {
                     this.commision = 0;
-                }
-                else {
-                    this.commision = (this.totalPrice - this.discountPrice)*0.30;
+                } else {
+                    this.commision = (this.totalPrice - this.discountPrice) * 0.30;
                 }
                 this.subTotal = this.totalPrice - this.discountPrice + this.commision;
             },
-            deep:true,
-            immediate:true,
+            deep: true,
+            immediate: true,
         },
     },
     async mounted() {
@@ -238,12 +285,9 @@ export default {
         if (!this.logedUser || typeof this.logedUser.id === 'undefined') {
             console.error('logedUser or logedUser.id is undefined', this.logedUser);
         } else {
-            //console.log('logedUser:', this.logedUser);
-            //console.log('logedUser.id:', this.logedUser.id);
             await this.loadUserBalance();  // 로그인한 사용자의 잔액을 로드
         }
     }
-
 }
 </script>
 <style scoped>

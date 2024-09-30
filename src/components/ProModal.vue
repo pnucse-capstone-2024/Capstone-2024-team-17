@@ -41,8 +41,10 @@
 </template>
 
 <script>
+
+import { mapActions } from 'vuex';
 import { mapGetters } from 'vuex';  // Vuex의 getter를 사용하기 위해 mapGetters를 임포트
-import { productClass } from '@/classes/productClass';
+//import { productClass } from '@/classes/productClass';
 import readJson from '../services/JsonService.js';
 
 export default {
@@ -50,7 +52,7 @@ export default {
   props: ['CoffeeOptions'],
   data() {
     return {
-      selectedOption: 'no',  // 초기값을 null로 설정
+      selectedOption: 'no',  
       options: '',
       optionFee: 0,
       amount: 0,
@@ -58,15 +60,17 @@ export default {
       total: 0,
       newPrice: 0,
       logedUser: null,
+      userID: 0,
       sessionCheck: false,
       isDistributor: false,
       isSeller: false,
     };
   },
   computed: {
-    ...mapGetters(['getConfirmedProductions']),
+    ...mapGetters(['getConfirmedProductions', 'getShoppingCart']),
   },
   methods: {
+    ...mapActions(['addCoffeeShoppingCart', 'deleteCoffeeShoppingCart']),
     resetAmount() {
       this.amount = 0; // 선택 옵션 변경 시 amount를 0으로 설정
       this.totalCh(); // 선택 변경 후 총합을 다시 계산
@@ -91,18 +95,35 @@ export default {
           alert("Selected amount exceeds available quantity");
         } 
         else {
-          let addCart = new productClass(
-            this.CoffeeOptions.pId,
-            this.CoffeeOptions.coffeeName,
-            this.CoffeeOptions.price,
-            "", "", this.selectedOption.type, "", "", this.amount
+          const cartItem = {
+            pId: this.CoffeeOptions.pId,
+            coffeeName: this.CoffeeOptions.coffeeName,
+            price: this.CoffeeOptions.price,
+            bType: this.selectedOption.type,
+            amount: this.amount,
+          };
+
+          const userId = this.logedUser.id;
+          const shoppingCart = this.getShoppingCart(userId);
+          // 장바구니에서 동일한 아이템이 있는지 확인
+          const existingCartItemIndex = shoppingCart.findIndex(
+            item => item.coffeeName === cartItem.coffeeName && item.bType === cartItem.bType
           );
+
+          if (existingCartItemIndex !== -1) {
+            this.deleteCoffeeShoppingCart({userId, existingCartItemIndex});
+            this.addCoffeeShoppingCart({ userId, production: cartItem });
+          }
+          else {
+            this.addCoffeeShoppingCart({ userId, production: cartItem });
+          }
+
           this.total = 0;
           this.amount = 0;
           this.selectedOption = 'no';
           this.flag = false;
           this.$emit('close');
-          this.$emit('cartAdding', addCart);
+          this.$emit('cartAdding', cartItem);
         }
       }
     },
@@ -134,6 +155,7 @@ export default {
         this.sessionCheck = true;
         this.isDistributor = this.logedUser.distributor;
         this.isSeller = this.logedUser.seller;
+        this.userID = this.logedUser.id;
       }
     },
     getAvailableQuantities(beanType) {
