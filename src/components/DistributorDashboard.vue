@@ -19,7 +19,12 @@
           <div v-if="productions.length > 0">
             <ul>
               <li v-for="(product, index) in productions" :key="index">
-                ID: {{ product.productionId }} | Coffee: {{ product.coffeeName }} - Type: {{ product.coffeeType }} - Quantity: {{ product.quantity }}kg - Status: {{ getStatusText(product.status) }}
+                ID: {{ product.productionId }} |
+                Coffee: {{ product.coffeeName }} -
+                Type: {{ product.coffeeType }} -
+                Quantity: {{ product.quantity }}kg -
+                **Total Price: {{ (product.totalPrice.toFixed(4))* 0.5 }} ETH** -
+                Status: {{ getStatusText(product.status) }}
                 <button class="check-btn" @click="handleApproveClick(product)">✅</button>
                 <button class="delete-btn" @click="rejectProduction(product.productionId)">❌</button>
               </li>
@@ -55,6 +60,8 @@
 import Web3 from 'web3';
 import CoffeeProductionContract from '../abi/CoffeeProduction.json';
 import AccountContract from '../abi/AccountContract.json';
+import coffeeData from '../../public/data/coffee.json'; // coffee.json 로드
+import optionData from '../../public/data/option.json'; // 옵션 데이터 로드
 
 export default {
   data() {
@@ -73,6 +80,8 @@ export default {
       accountContract: null,
       AccountContractAddress: '0x3d135Af01300168Fe4E5ddb60CcDB68446726167',
       logedUser: JSON.parse(sessionStorage.getItem('logeduser')),
+      coffeeList: [], // 커피 데이터를 저장할 배열
+      options: [], // 타입 수수료 데이터를 저장할 배열
     };
   },
   computed: {
@@ -83,52 +92,72 @@ export default {
   methods: {
     
     async handleApproveClick(product) {
-    try {
-      // approveProduction 메서드 호출
-      await this.approveProduction(product.productionId);
-      console.log('approveProduction 완료');
+      try {
+        // approveProduction 메서드 호출
+        await this.approveProduction(product.productionId);
+        console.log('approveProduction 완료');
 
-      const coffeeName = product.coffeeName;
-      const beanType = product.coffeeType;
+        // 미리 계산된 totalPrice 사용
+        const totalPrice = product.totalPrice;
+        const halfPrice = totalPrice * 0.5;
 
-      // product.quantity가 BigInt일 수 있으므로 명시적으로 Number로 변환
-      const orderedAmount = Number(product.quantity);
+        console.log(`Total price: ${totalPrice}, Half price: ${halfPrice}`);
 
-      console.log('찾고 있는 상품 정보:', coffeeName, beanType, orderedAmount);
+        // 이더로 변환
+        const halfPriceInWei = this.web3.utils.toWei(halfPrice.toString(), 'ether');
 
-      // Vuex에서 해당 상품 찾기
-      const vueproduct = this.$store.getters.getConfirmedProductions.find(
-        (item) => item.coffeeName === coffeeName && item.beanType === beanType
-      );
-      console.log('vueproduct:', vueproduct);
-
-      if (vueproduct) {
-        // vueproduct.quantity가 BigInt일 수 있으므로 Number로 변환
-        const currentQuantity = Number(vueproduct.quantity);
-        const newQuantity = currentQuantity + orderedAmount;
-
-        console.log('newQuantity:', newQuantity);
-
-        if (newQuantity < 0) {
-          alert(`The stock of ${coffeeName} (${beanType}) is insufficient`);
+        // 생산자의 계정 주소 가져오기
+        const producerAddress = product.producer;
+        if (!producerAddress) {
+          console.error('Producer address not found');
           return;
         }
 
-        // Vuex의 action을 사용하여 재고 수량을 업데이트합니다.
-        this.$store.dispatch('updateConfirmedProductionQuantity', {
-          coffeeName: coffeeName,
-          beanType: beanType,
-          newQuantity: newQuantity,
+        // 이더 전송
+        await this.web3.eth.sendTransaction({
+          from: this.accounts[this.logedUser.id], // 유통업자 계정
+          to: producerAddress, // 생산자 계정
+          value: halfPriceInWei,
         });
-        console.log('updateConfirmedProductionQuantity 완료');
-      } else {
-        console.warn(`No product found with coffeeName ${coffeeName} and beanType ${beanType}`);
+
+        alert(`Sent ${halfPrice} ETH to the producer.`);
+
+        // 재고 업데이트 로직
+
+        // Vuex에서 해당 상품 찾기
+        const vueproduct = this.$store.getters.getConfirmedProductions.find(
+          (item) => item.coffeeName === product.coffeeName && item.beanType === product.beanType || product.coffeeType
+        );
+        console.log('vueproduct:', vueproduct);
+
+        if (vueproduct) {
+          // vueproduct.quantity가 BigInt일 수 있으므로 Number로 변환
+          const currentQuantity = Number(vueproduct.quantity);
+          const newQuantity = currentQuantity + Number(product.quantity);
+
+          console.log('newQuantity:', newQuantity);
+
+          if (newQuantity < 0) {
+            alert(`The stock of ${product.coffeeName} (${product.beanType || product.coffeeType}) is insufficient`);
+            return;
+          }
+
+          // Vuex의 action을 사용하여 재고 수량을 업데이트합니다.
+          this.$store.dispatch('updateConfirmedProductionQuantity', {
+            coffeeName: product.coffeeName,
+            beanType: product.beanType || product.coffeeType,
+            newQuantity: newQuantity,
+          });
+          console.log('updateConfirmedProductionQuantity 완료');
+        } else {
+          console.warn(`No product found with coffeeName ${product.coffeeName} and beanType ${product.beanType || product.coffeeType}`);
+        }
+
+      } catch (error) {
+        console.error('Error handling approve click:', error);
+        alert('Error handling approve click');
       }
-    } catch (error) {
-      console.error('Error handling approve click:', error);
-      alert('Error handling approve click');
-    }
-  },
+    },
     getStatusText(status) {
       let statusNum;
 
@@ -163,28 +192,45 @@ export default {
       }
     },
     async fetchProductions() {
-    try {
-      const count = await this.contract.methods.productionCount().call();
-      const productions = [];
+      try {
+        const count = await this.contract.methods.productionCount().call();
+        const productions = [];
 
-      for (let i = 0; i < count; i++) {
-        const production = await this.contract.methods.getProduction(i).call();
-        const statusNum = Number(production.status);
+        for (let i = 0; i < count; i++) {
+          const production = await this.contract.methods.getProduction(i).call();
+          const statusNum = Number(production.status);
 
-        if (statusNum === 0) {
-          productions.push({ ...production, productionId: i, status: production.status });
+          if (statusNum === 0) {
+            // 총 금액 계산 로직 추가 시작
+            const coffeeName = production.coffeeName;
+            const beanType = production.beanType || production.coffeeType;
+            const quantity = Number(production.quantity);
+
+            // coffeeList에서 해당 커피의 가격 찾기
+            const coffeeItem = this.coffeeList.find(item => item.coffeeName === coffeeName);
+            if (!coffeeItem) {
+              console.error(`Coffee item not found for ${coffeeName}`);
+              production.totalPrice = 0;
+            } else {
+              const price = Number(coffeeItem.price);
+              const totalPrice = this.calculateTotalPrice(price, beanType, quantity);
+              production.totalPrice = totalPrice;
+            }
+            // 총 금액 계산 로직 추가 끝
+
+            productions.push({ ...production, productionId: i, status: production.status });
+          }
         }
+
+        this.productions = productions;
+
+        // Fetch the ProductionRecorded events
+        await this.getProductionEvents();
+      } catch (error) {
+        console.error('Error fetching productions:', error);
+        alert('Error fetching production data');
       }
-
-      this.productions = productions;
-
-      // Fetch the ProductionRecorded events
-      await this.getProductionEvents();
-    } catch (error) {
-      console.error('Error fetching productions:', error);
-      alert('Error fetching production data');
-    }
-  },
+    },
   async getProductionEvents() {
     try {
       const events = await this.contract.getPastEvents('ProductionRecorded', {
@@ -248,6 +294,28 @@ export default {
       alert('Error rejecting production');
     }
   },
+  // 타입 수수료 계산 메서드
+  calculateOptionFee(feeType) {
+      const option = this.options.find(opt => opt.type === feeType);
+      return option ? option.fee : 0;
+    },
+    // 개별 가격 계산 메서드
+    calculateEachPrice(price, feeType) {
+      const optionFee = this.calculateOptionFee(feeType);
+      return price + optionFee;
+    },
+    // 총 가격 계산 메서드
+    calculateTotalPrice(price, feeType, quantity) {
+      const eachPrice = this.calculateEachPrice(price, feeType);
+      return eachPrice * quantity;
+    },
+    loadCoffeeData() {
+      this.coffeeList = coffeeData; // coffee.json 데이터를 배열에 저장
+      console.log('Loaded coffeeList:', this.coffeeList);
+
+      this.options = optionData; // 옵션 데이터를 배열에 저장
+      console.log('Loaded options:', this.options);
+    },
   submitShippingInfo() {
     alert(`Shipping to ${this.shippingInfo.address} on ${this.shippingInfo.date}`);
     this.shippingInfo.address = '';
@@ -259,6 +327,7 @@ async mounted() {
   this.accounts = await this.web3.eth.getAccounts();
   this.contract = new this.web3.eth.Contract(CoffeeProductionContract.abi, this.ProductionContractAddress);
   this.accountContract = new this.web3.eth.Contract(AccountContract.abi, this.AccountContractAddress);
+  this.loadCoffeeData();
   await this.fetchProductions();
 }
 };
