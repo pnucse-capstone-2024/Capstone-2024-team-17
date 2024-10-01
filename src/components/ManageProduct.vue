@@ -24,6 +24,13 @@
                       </div>
                     </div>
                   </div>
+
+                  <div v-if="transactionInfo" class="transaction-info">
+                <h3>Transaction Details</h3>
+                <p><strong>Transaction Hash:</strong> {{ transactionInfo.txHash }}</p>
+                <p><strong>Block Number:</strong> {{ transactionInfo.blockNumber }}</p>
+                <p><strong>Production Time:</strong> {{ transactionInfo.blockTime }}</p>
+              </div>
               </div>
           </section>
 
@@ -35,7 +42,11 @@
 </template>
 
 <script>
-import readJson from '../services/JsonService.js'
+import readJson from '../services/JsonService.js';
+import Web3 from 'web3';
+import CoffeeProductionContract from '../abi/CoffeeProduction.json';
+import AccountContract from '../abi/AccountContract.json';
+
 export default {
   name: 'ManageProduct',
 
@@ -46,55 +57,97 @@ export default {
       coffeeBeanType: '',
       productionQty: 0,
       options: '',
-      coffeeName: ''
+      coffeeName: '',
+      contract: null,
+      accounts: [],
+      coffeeId: 0,
+      web3: null,
+      transactionInfo: null,
+      contractAddress: '0xe2Fa463Ffb77eC310f69461361351B59E2A79479',
+      accountContract: null,
+      accountContractAddress: '0x3d135Af01300168Fe4E5ddb60CcDB68446726167',
     };
   },
   methods: {
     close() {
       this.$router.push({ name: 'products-page' });
     },
-    
-    saveProduction() {
-      if (confirm("Are you sure you want to save your product?")) {
-        if (this.coffeeBeanType && this.productionQty > 0) {
-          const productionData = {
-            beanType: this.coffeeBeanType,
-            quantity: this.productionQty,
-            coffeeName: this.coffeeName
+
+    async saveProduction() {
+      const userId = this.logedUser.id;
+      if (this.coffeeBeanType && this.productionQty > 0 && this.coffeeName) {
+        const productionData = {
+          beanType: this.coffeeBeanType,
+          quantity: this.productionQty,
+          coffeeName: this.coffeeName,
+          status: this.status
+        };
+
+        try {
+          const estimatedGas = await this.contract.methods
+            .recordProduction(productionData.coffeeName, productionData.beanType, productionData.quantity)
+            .estimateGas({ from: this.accounts[userId] });
+
+          const tx = await this.contract.methods
+            .recordProduction(productionData.coffeeName, productionData.beanType, productionData.quantity)
+            .send({
+              from: this.accounts[userId],
+              gas: estimatedGas,
+            });
+
+          this.transactionInfo = {
+            txHash: tx.transactionHash,
+            blockNumber: tx.blockNumber,
+            gasUsed: tx.gasUsed,
+            blockTime: new Date().toLocaleString(),
           };
+
+          // Save TxHash to AccountContract
+          const estimatedGasForAddString = await this.accountContract.methods
+            .addString(tx.transactionHash)
+            .estimateGas({ from: this.accounts[userId] });
+
+          await this.accountContract.methods
+            .addString(tx.transactionHash)
+            .send({
+              from: this.accounts[userId],
+              gas: estimatedGasForAddString,
+            });
+
+          alert(`Production recorded successfully!`);
+
+          // 기존 생산 데이터에서 해당 항목 제거 (체크된 항목 삭제)
+          this.$emit('production-saved', productionData);
 
           // Vuex에 저장
           this.$store.commit('addProduction', productionData);
 
-          alert("The production volume has been successfully saved. The distributor will review and confirm it.");
-          // 페이지 이동
-          this.$router.push({ name: 'products-page' });
-        } 
-        else {
-          alert("Please select a coffee type or enter a valid production quantity.");
+        } catch (error) {
+          console.error('Transaction failed:', error);
+          alert('Error recording production');
         }
+      } else {
+        alert('Please select a coffee type, coffee name, or enter a valid production quantity.');
       }
     },
 
-    loadJson(){
-      readJson.getJson("option")
-        .then(res=>{
+    loadJson() {
+      readJson.getJson('option')
+        .then(res => {
           this.options = res.data;
         })
-        .catch(err=>{console.log(err)})
+        .catch(err => { console.log(err); });
 
       readJson.getJson('coffee')
         .then((res) => {
           for (let idx in res.data) {
             this.coffeeList.set(res.data[idx].pId, res.data[idx]);
           }
-          // 판매자가 관리하는 커피를 찾음
-          const managedCoffeeId = this.logedUser.id - 10; // ID에서 10을 뺀 값을 pId로 사용
+          const managedCoffeeId = this.logedUser.id - 10;
           const managedCoffee = this.coffeeList.get(managedCoffeeId);
           if (managedCoffee) {
-            this.coffeeName = managedCoffee.coffeeName; // 판매하는 커피의 이름을 설정
-          } 
-          else {
+            this.coffeeName = managedCoffee.coffeeName;
+          } else {
             console.log('Managed coffee not found');
           }
         })
@@ -103,12 +156,16 @@ export default {
         });
     },
   },
-  mounted(){
-      this.loadJson();
+  async mounted() {
+    this.web3 = new Web3(new Web3.providers.HttpProvider('http://127.0.0.1:7545'));
+    this.accounts = await this.web3.eth.getAccounts();
+    this.contract = new this.web3.eth.Contract(CoffeeProductionContract.abi, this.contractAddress);
+    this.accountContract = new this.web3.eth.Contract(AccountContract.abi, this.accountContractAddress);
+    this.loadJson();
   },
-
 };
 </script>
+
 
 <style scoped>
 .modal-backdrop {

@@ -11,6 +11,7 @@
             <li v-if="!isSeller && !isDistributor && !isManager"><router-link to='/shoppingcart'>Shopping Cart</router-link></li>
             <li v-if="!isSeller && !isDistributor"><router-link to='/shippinginfo'>Shipping Info</router-link></li>
             <li v-if="isDistributor"><router-link to='/distributordashboard'>Distributor Dashboard</router-link></li>
+            <li><router-link to='/TrackingPage'>Tracking Page</router-link></li>
         </ul>
         <ul v-else>
             <li><router-link v-show="!user" to='/login'>Login</router-link></li>

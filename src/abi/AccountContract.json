@@ -1,0 +1,44 @@
+{
+    "abi":
+    [
+        {
+            "inputs": [
+                {
+                    "internalType": "string",
+                    "name": "_data",
+                    "type": "string"
+                }
+            ],
+            "name": "addString",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "inputs": [],
+            "name": "getAllStrings",
+            "outputs": [
+                {
+                    "internalType": "string[]",
+                    "name": "",
+                    "type": "string[]"
+                }
+            ],
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "inputs": [],
+            "name": "getStringCount",
+            "outputs": [
+                {
+                    "internalType": "uint256",
+                    "name": "",
+                    "type": "uint256"
+                }
+            ],
+            "stateMutability": "view",
+            "type": "function"
+        }
+    ]
+}

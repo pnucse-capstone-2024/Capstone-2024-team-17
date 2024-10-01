@@ -192,7 +192,7 @@ export default {
                     // 스마트 컨트랙트 메서드 호출로 트랜잭션을 발생시킵니다.
                     await this.contract.methods.purchaseCoffee(coffeeIndex, quantity).send({
                         from: this.accounts[this.logedUser.id],
-                        to: this.accounts[coffeeIndex + 10],
+                        to: this.accounts[22],
                         value: totalUnitPriceWei,
                     });
 

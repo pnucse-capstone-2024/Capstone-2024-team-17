@@ -9,6 +9,7 @@ import PagenotFound from '../components/PagenotFound.vue'
 import ShippingInfoCompo from '../components/ShippingInfoCompo.vue'
 import DistributorDashboard from '../components/DistributorDashboard.vue'
 import ManageProduct from '../components/ManageProduct.vue'
+import TrackingPage from '../components/TrackingPage.vue'
 
 const routes = [
     {
@@ -51,6 +52,11 @@ const routes = [
         path: '/distributordashboard',
         name: 'distributor-dashboard',
         component: DistributorDashboard
+    },
+    {
+        path: '/TrackingPage',
+        name: 'Tracking page',
+        component: TrackingPage
     },
     {
         path: '/manageproduct',
