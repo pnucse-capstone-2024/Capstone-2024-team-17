@@ -27,7 +27,7 @@
 
                   <div v-if="transactionInfo" class="transaction-info">
                 <h3>Transaction Details</h3>
-                <p><strong>Transaction Hash:</strong> {{ transactionInfo.txHash }}</p>
+                <p><strong>Transaction Hash:</strong> <span class="break-word">{{ transactionInfo.txHash }}</span></p>
                 <p><strong>Block Number:</strong> {{ transactionInfo.blockNumber }}</p>
                 <p><strong>Production Time:</strong> {{ transactionInfo.blockTime }}</p>
               </div>
@@ -266,5 +266,8 @@ input{
   padding: 3%;
   border: 1px solid #4AAE9B;
   background: transparent;
+}
+.break-word {
+  word-break: break-all; /* 또는 word-wrap: break-word; */
 }
 </style>
