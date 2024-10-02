@@ -65,7 +65,7 @@ export default {
       transactionInfo: null,
       contractAddress: '0xe2Fa463Ffb77eC310f69461361351B59E2A79479',
       accountContract: null,
-      accountContractAddress: '0x3d135Af01300168Fe4E5ddb60CcDB68446726167',
+      accountContractAddress: '0x79Cd64F2D9EF361Af8c96e49C1Be367340dB5ab0',
     };
   },
   methods: {

@@ -78,7 +78,7 @@ export default {
       ProductionContractAddress: '0xe2Fa463Ffb77eC310f69461361351B59E2A79479',
       productionIdToTxHash: {},
       accountContract: null,
-      AccountContractAddress: '0x3d135Af01300168Fe4E5ddb60CcDB68446726167',
+      AccountContractAddress: '0x79Cd64F2D9EF361Af8c96e49C1Be367340dB5ab0',
       logedUser: JSON.parse(sessionStorage.getItem('logeduser')),
       coffeeList: [], // 커피 데이터를 저장할 배열
       options: [], // 타입 수수료 데이터를 저장할 배열
@@ -219,7 +219,7 @@ export default {
           if (statusNum === 0) {
             // 총 금액 계산 로직 추가 시작
             const coffeeName = production.coffeeName;
-            const beanType = production.beanType || production.coffeeType;
+            const beanType = production.coffeeType;
             const quantity = Number(production.quantity);
 
             // coffeeList에서 해당 커피의 가격 찾기
@@ -323,7 +323,7 @@ export default {
     // 총 가격 계산 메서드
     calculateTotalPrice(price, feeType, quantity) {
       const eachPrice = this.calculateEachPrice(price, feeType);
-      return eachPrice * quantity;
+      return eachPrice * quantity * 10;
     },
     loadCoffeeData() {
       this.coffeeList = coffeeData; // coffee.json 데이터를 배열에 저장

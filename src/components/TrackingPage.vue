@@ -32,7 +32,7 @@
   
               <!-- 저장된 TxHash 목록 표시 -->
               <div>
-                <h3>Stored Transaction Hashes</h3>
+                <h3>Stored My Transaction Hashes</h3>
                 <button @click="getStoredTxHashes">Refresh Stored TxHashes</button>
                 <ul>
                   <li v-for="(txHash, index) in storedTxHashes" :key="index">{{ formatTimestamp(timestamps[txHash].timestamp) }},
@@ -62,7 +62,7 @@
         contract: null,
         web3: null,
         ProductionContractAddress: '0xe2Fa463Ffb77eC310f69461361351B59E2A79479',
-        AccountContractAddress: '0x3d135Af01300168Fe4E5ddb60CcDB68446726167',
+        AccountContractAddress: '0x79Cd64F2D9EF361Af8c96e49C1Be367340dB5ab0',
         accountContract: null,
         storedTxHashes: [],
         accounts: [],
