@@ -90,7 +90,13 @@ export default {
       }
     },
   methods: {
-    
+    bigIntToString(obj) {
+      return JSON.parse(
+        JSON.stringify(obj, (key, value) =>
+          typeof value === 'bigint' ? value.toString() : value
+        )
+      );
+    },
     async handleApproveClick(product) {
       try {
         // approveProduction 메서드 호출
@@ -126,9 +132,10 @@ export default {
 
         // Vuex에서 해당 상품 찾기
         const vueproduct = this.$store.getters.getConfirmedProductions.find(
-          (item) => item.coffeeName === product.coffeeName && item.beanType === product.beanType || product.coffeeType
+          (item) => (item.coffeeName === product.coffeeName) && (item.beanType === product.coffeeType)
         );
         console.log('vueproduct:', vueproduct);
+        console.log('product.beanType:', product.coffeeType);
 
         if (vueproduct) {
           // vueproduct.quantity가 BigInt일 수 있으므로 Number로 변환
@@ -138,7 +145,7 @@ export default {
           console.log('newQuantity:', newQuantity);
 
           if (newQuantity < 0) {
-            alert(`The stock of ${product.coffeeName} (${product.beanType || product.coffeeType}) is insufficient`);
+            alert(`The stock of ${product.coffeeName} (${product.coffeeType}) is insufficient`);
             return;
           }
 
@@ -150,7 +157,16 @@ export default {
           });
           console.log('updateConfirmedProductionQuantity 완료');
         } else {
-          console.warn(`No product found with coffeeName ${product.coffeeName} and beanType ${product.beanType || product.coffeeType}`);
+
+          const productData = this.bigIntToString({
+            Name: product.coffeeName,
+            Type: product.coffeeType,
+            Quantity: product.quantity,
+          });
+
+          this.$store.commit('addconfirmProduction', productData);
+          console.log('addconfirmProduction successfully!');
+          //console.warn(`No product found with coffeeName ${product.coffeeName} and beanType ${product.beanType || product.coffeeType}`);
         }
 
       } catch (error) {

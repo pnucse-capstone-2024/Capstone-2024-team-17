@@ -15,6 +15,14 @@ export const store = createStore({
     removeProduction(state, index) {
       state.coffeeProductions.splice(index, 1); // 인덱스에 해당하는 데이터를 제거
     },
+    addconfirmProduction(state, { Name, Type, Quantity }){
+      const production = {
+        beanType: Type,
+        quantity: Quantity,
+        coffeeName: Name
+      };
+      state.confirmedProductions.push(production); // 데이터 추가
+    },
 
     // confirmed production
     confirmProduction(state, product) {

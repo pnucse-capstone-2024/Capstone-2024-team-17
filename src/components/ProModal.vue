@@ -163,8 +163,8 @@ export default {
 
       const product = this.getConfirmedProductions.find(
         item =>
-          item.coffeeName === this.CoffeeOptions.coffeeName &&
-          item.beanType === beanType
+          (item.coffeeName === this.CoffeeOptions.coffeeName) &&
+          (beanType === item.beanType)
       );
 
       if (product) {
