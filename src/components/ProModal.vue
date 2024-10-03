@@ -85,47 +85,80 @@ export default {
     addTocart() {
       if (!this.selectedOption) {
         alert("You have to choose all the options");
-      }
-      else if (this.amount == 0){
+      } else if (this.amount == 0) {
         alert("You cannot add 0 to cart");
-      } 
-      else {
+      } else {
         const availableQuantity = this.getAvailableQuantities(this.selectedOption.type);
         if (this.amount > availableQuantity) {
           alert("Selected amount exceeds available quantity");
-        } 
-        else {
-          const cartItem = {
-            pId: this.CoffeeOptions.pId,
-            coffeeName: this.CoffeeOptions.coffeeName,
-            price: this.CoffeeOptions.price,
-            bType: this.selectedOption.type,
-            amount: this.amount,
-          };
-
-          const userId = this.logedUser.id;
-          const shoppingCart = this.getShoppingCart(userId);
-          // 장바구니에서 동일한 아이템이 있는지 확인
-          const existingCartItemIndex = shoppingCart.findIndex(
-            item => item.coffeeName === cartItem.coffeeName && item.bType === cartItem.bType
+        } else {
+          // Get the TxInfo for the product
+          const product = this.getConfirmedProductions.find(
+            item =>
+              item.coffeeName === this.CoffeeOptions.coffeeName &&
+              item.beanType === this.selectedOption.type
           );
 
-          if (existingCartItemIndex !== -1) {
-            this.deleteCoffeeShoppingCart({userId, existingCartItemIndex});
-            this.addCoffeeShoppingCart({ userId, production: cartItem });
-          }
-          else {
-            this.addCoffeeShoppingCart({ userId, production: cartItem });
-          }
+          if (product && product.TxInfo) {
+            // Calculate the required txHashes and quantities
+            const requiredTxInfo = this.calculateRequiredTxInfo(product.TxInfo, this.amount);
 
-          this.total = 0;
-          this.amount = 0;
-          this.selectedOption = 'no';
-          this.flag = false;
-          this.$emit('close');
-          this.$emit('cartAdding', cartItem);
+            const cartItem = {
+              pId: this.CoffeeOptions.pId,
+              coffeeName: this.CoffeeOptions.coffeeName,
+              price: this.CoffeeOptions.price,
+              bType: this.selectedOption.type,
+              amount: this.amount,
+              txInfo: requiredTxInfo, // Include the required TxInfo
+            };
+
+            const userId = this.logedUser.id;
+            const shoppingCart = this.getShoppingCart(userId);
+            // 장바구니에서 동일한 아이템이 있는지 확인
+            const existingCartItemIndex = shoppingCart.findIndex(
+              item => item.coffeeName === cartItem.coffeeName && item.bType === cartItem.bType
+            );
+
+            if (existingCartItemIndex !== -1) {
+              this.deleteCoffeeShoppingCart({userId, existingCartItemIndex});
+              this.addCoffeeShoppingCart({ userId, production: cartItem });
+            }
+            else {
+              this.addCoffeeShoppingCart({ userId, production: cartItem });
+            }
+
+            this.total = 0;
+            this.amount = 0;
+            this.selectedOption = 'no';
+            this.flag = false;
+            this.$emit('close');
+            this.$emit('cartAdding', cartItem);
+
+          } else {
+            alert('Product information is not available.');
+          }
         }
       }
+    },
+    calculateRequiredTxInfo(txInfoArray, amountNeeded) {
+      const requiredTxInfo = [];
+      let remainingAmount = Number(amountNeeded);
+      for (const txInfo of txInfoArray) {
+        if (remainingAmount <= 0) break;
+        const availableQuantity = Number(txInfo.quantity);
+        const quantityToUse = Math.min(availableQuantity, remainingAmount);
+        requiredTxInfo.push({
+          txHash: txInfo.txHash,
+          quantity: quantityToUse,
+          timestamp: txInfo.timestamp,
+        });
+        remainingAmount -= quantityToUse;
+      }
+      if (remainingAmount > 0) {
+        alert('Not enough stock to fulfill the order.');
+        throw new Error('Insufficient stock');
+      }
+      return requiredTxInfo;
     },
     loadJson() {
       readJson.getJson("option")
@@ -168,7 +201,7 @@ export default {
       );
 
       if (product) {
-        const quantity = product.quantity * 10; // 100g 단위로 변환
+        const quantity = product.quantity; // 100g 단위로 변환
         return quantity;
       } else {
         console.log('Product not found.');

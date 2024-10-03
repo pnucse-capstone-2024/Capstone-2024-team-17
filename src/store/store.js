@@ -16,13 +16,14 @@ export const store = createStore({
     removeProduction(state, index) {
       state.coffeeProductions.splice(index, 1); // 인덱스에 해당하는 데이터를 제거
     },
-    addconfirmProduction(state, { Name, Type, Quantity }){
+    addconfirmProduction(state, { Name, Type, Quantity, TxInfo }) {
       const production = {
+        coffeeName: Name,
         beanType: Type,
         quantity: Quantity,
-        coffeeName: Name
+        TxInfo: TxInfo, // Include TxInfo array
       };
-      state.confirmedProductions.push(production); // 데이터 추가
+      state.confirmedProductions.push(production);
     },
 
     // confirmed production
@@ -48,18 +49,46 @@ export const store = createStore({
         state.confirmedProductions.splice(index, 1); // 데이터 삭제
       }
     },
-    updateConfirmedProductionQuantity(state, { coffeeName, beanType, newQuantity }) {
-      console.log('Updating confirmed production quantity:', coffeeName, beanType, newQuantity); // 전달된 값 출력
+    updateConfirmedProduction(state, { coffeeName, beanType, quantity, txInfo }) {
       const product = state.confirmedProductions.find(
         item => item.coffeeName === coffeeName && item.beanType === beanType
       );
       if (product) {
-        console.log('Found product:', product); // 찾은 상품 출력
-        product.quantity = newQuantity;
-        console.log('Updated product quantity:', product); // 업데이트된 수량 출력
+        product.quantity = Number(product.quantity) + (Number(quantity) * 10);
+        // Ensure txInfo values are Numbers or Strings
+        const sanitizedTxInfo = {
+          txHash: txInfo.txHash,
+          quantity: Number(txInfo.quantity) * 10,
+          timestamp: Number(txInfo.timestamp),
+        };
+        product.TxInfo.push(sanitizedTxInfo);
+      } else {
+        // If product doesn't exist, create a new one
+        const sanitizedTxInfo = {
+          txHash: txInfo.txHash,
+          quantity: Number(txInfo.quantity) * 10,
+          timestamp: Number(txInfo.timestamp),
+        };
+        state.confirmedProductions.push({
+          coffeeName,
+          beanType,
+          quantity: Number(quantity) * 10,
+          TxInfo: [sanitizedTxInfo],
+        });
       }
-      else {
-        console.log('Product not found'); // 상품을 찾지 못한 경우 출력
+    },
+    updateConfirmedProductionAfterOrder(state, { coffeeName, beanType, newQuantity, newTxInfo }) {
+      const product = state.confirmedProductions.find(
+        item => item.coffeeName === coffeeName && item.beanType === beanType
+      );
+      if (product) {
+        product.quantity = Number(newQuantity);
+        // Ensure all txInfo entries have Numbers or Strings
+        product.TxInfo = newTxInfo.map(tx => ({
+          txHash: tx.txHash,
+          quantity: Number(tx.quantity),
+          timestamp: Number(tx.timestamp),
+        }));
       }
     },
     clearConfirmedProductions(state) {
@@ -131,6 +160,12 @@ export const store = createStore({
     deleteCoffeeOrderInfo({ commit }, { userId, index }) {
       commit('removeOrderInfo', { userId, index });
     },
+    addOrUpdateConfirmedProduction({ commit }, { coffeeName, beanType, quantity, txInfo }) {
+      commit('updateConfirmedProduction', { coffeeName, beanType, quantity, txInfo });
+    },
+    updateConfirmedProductionAfterOrder({ commit }, payload) {
+      commit('updateConfirmedProductionAfterOrder', payload);
+    }
   },
   getters: {
     getCoffeeProductions: state => {

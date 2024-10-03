@@ -95,74 +95,56 @@ export default {
     },
     async handleApproveClick(product) {
       try {
-        // approveProduction 메서드 호출
+        // Approve the production
         await this.approveProduction(product.productionId);
-        console.log('approveProduction 완료');
 
-        // 미리 계산된 totalPrice 사용
-        const totalPrice = product.price;
+        // Use the pre-calculated totalPrice
+        const totalPrice = Number(product.price); // Ensure price is a Number
         const halfPrice = totalPrice;
 
-        // 이더로 변환
+        // Convert to Wei
         const halfPriceInWei = this.web3.utils.toWei(halfPrice.toString(), 'ether');
 
-        // 생산자의 계정 주소 가져오기
+        // Get producer's account address
         const producerAddress = product.producer;
         if (!producerAddress) {
           console.error('Producer address not found');
           return;
         }
 
-        // 이더 전송
+        // Send Ether to producer
         await this.web3.eth.sendTransaction({
-          from: this.accounts[this.logedUser.id], // 유통업자 계정
-          to: producerAddress, // 생산자 계정
+          from: this.accounts[this.logedUser.id],
+          to: producerAddress,
           value: halfPriceInWei,
         });
 
         alert(`Sent ${halfPrice} ETH to the producer.`);
 
-        // 재고 업데이트 로직
+        // Get the txHash associated with the productionId
+        const txHash = this.productionIdToTxHash[product.productionId];
 
-        // Vuex에서 해당 상품 찾기
-        const vueproduct = this.$store.getters.getConfirmedProductions.find(
-          (item) => (item.coffeeName === product.coffeeName) && (item.beanType === product.coffeeType)
-        );
-        console.log('vueproduct:', vueproduct);
-        console.log('product.beanType:', product.coffeeType);
+        // Fetch the transaction receipt to get the timestamp
+        const txReceipt = await this.web3.eth.getTransactionReceipt(txHash);
+        const block = await this.web3.eth.getBlock(txReceipt.blockNumber);
+        const timestamp = block.timestamp;
 
-        if (vueproduct) {
-          // vueproduct.quantity가 BigInt일 수 있으므로 Number로 변환
-          const currentQuantity = Number(vueproduct.quantity);
-          const newQuantity = currentQuantity + Number(product.quantity);
+        // Prepare txInfo object
+        const txInfo = {
+          txHash: txHash,
+          quantity: Number(product.quantity),
+          timestamp: Number(timestamp), // Ensure timestamp is a Number
+        };
 
-          console.log('newQuantity:', newQuantity);
+        // Update confirmedProductions in Vuex store
+        this.$store.dispatch('addOrUpdateConfirmedProduction', {
+          coffeeName: product.coffeeName,
+          beanType: product.coffeeType,
+          quantity: Number(product.quantity),
+          txInfo: txInfo,
+        });
 
-          if (newQuantity < 0) {
-            alert(`The stock of ${product.coffeeName} (${product.coffeeType}) is insufficient`);
-            return;
-          }
-
-          // Vuex의 action을 사용하여 재고 수량을 업데이트합니다.
-          this.$store.dispatch('updateConfirmedProductionQuantity', {
-            coffeeName: product.coffeeName,
-            beanType: product.beanType || product.coffeeType,
-            newQuantity: newQuantity,
-          });
-          console.log('updateConfirmedProductionQuantity 완료');
-        } else {
-
-          const productData = this.bigIntToString({
-            Name: product.coffeeName,
-            Type: product.coffeeType,
-            Quantity: product.quantity,
-          });
-
-          this.$store.commit('addconfirmProduction', productData);
-          console.log('addconfirmProduction successfully!');
-          //console.warn(`No product found with coffeeName ${product.coffeeName} and beanType ${product.beanType || product.coffeeType}`);
-        }
-
+        console.log('Confirmed production updated successfully!');
       } catch (error) {
         console.error('Error handling approve click:', error);
         alert('Error handling approve click');

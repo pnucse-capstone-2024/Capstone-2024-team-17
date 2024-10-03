@@ -36,6 +36,12 @@
                 <ul v-for="(coffee,idx) in userShoppingCart" :key="idx">
                     <li>
                         <p><span style="margin-left: 10px;">{{coffee.coffeeName}}</span> x {{coffee.amount}}(100g, {{coffee.bType}})</p>
+                        <!-- Display P-days and quantities -->
+                        <ul>
+                            <li v-for="(tx, txIdx) in coffee.txInfo" :key="txIdx">
+                            P-day {{ txIdx + 1 }}: {{ tx.timestamp }}, {{ tx.quantity }} units
+                            </li>
+                        </ul>
                     </li>
                 </ul>
                 <section>
@@ -52,7 +58,7 @@
                     <br/>
                     <br/>
                     <p><input v-model="chBox" type="checkbox" required> Your personal data will be used to process your order, support your experience throughout this website, and for other purposes described in our "Privacy policy" and "terms and conditions".</p>
-                    <button @click="orderFunc" type="submit">Place order</button>
+                    <button @click="orderFunc" type="button">Place order</button>
                 </form>
             </section>
         </article>
@@ -188,43 +194,54 @@ export default {
 
             try {
                 for (let coffee of shoppingCart) {
-                    const quantity = coffee.amount;
-                    const coffeeIndex = parseInt(coffee.pId); // pId를 정수로 변환하여 사용
-                    const totalUnitPrice = this.calculateWhole(coffee.price, coffee.bType, coffee.amount);
-                    const totalUnitPriceWei = this.web3.utils.toWei(totalUnitPrice.toString(), 'ether');
+                const quantity = Number(coffee.amount);
+                const coffeeName = coffee.coffeeName;
+                const beanType = coffee.bType;
+                const orderedAmount = quantity;
 
-                    // 스마트 컨트랙트 메서드 호출로 트랜잭션을 발생시킵니다.
-                    await this.contract.methods.purchaseCoffee(coffeeIndex, quantity).send({
-                        from: this.accounts[this.logedUser.id],
-                        to: this.accounts[22],
-                        value: totalUnitPriceWei,
-                    });
+                const product = this.$store.getters.getConfirmedProductions.find(
+                    (item) => item.coffeeName === coffeeName && item.beanType === beanType
+                );
 
-                    // 주문한 수량만큼 재고 감소 처리
-                    const coffeeName = coffee.coffeeName;
-                    const beanType = coffee.bType;
-                    const orderedAmount = quantity;
-                    const product = this.$store.getters.getConfirmedProductions.find(
-                        (item) => item.coffeeName === coffeeName && item.beanType === beanType
-                    );
-
-                    if (product) {
-                        const newQuantity = ((product.quantity * 10) - orderedAmount) / 10;
-                        if (newQuantity < 0) {
-                            alert(`The stock of ${coffeeName} (${beanType}) is insufficient`);
-                            return;
-                        }
-
-                        // Vuex의 action을 사용하여 재고 수량을 업데이트합니다.
-                        this.updateConfirmedProductionQuantity({
-                            coffeeName: coffeeName,
-                            beanType: beanType,
-                            newQuantity: newQuantity,
-                        });
-                    } else {
-                        alert(`${coffeeName} (${beanType}) cannot be found`);
-                        return;
+                if (product) {
+                    // Update the TxInfo in FIFO order
+                    let remainingAmount = orderedAmount;
+                    const updatedTxInfo = [];
+                    for (const txInfo of product.TxInfo) {
+                    if (remainingAmount <= 0) {
+                        updatedTxInfo.push(txInfo);
+                        continue;
                     }
+                    const availableQuantity = Number(txInfo.quantity);
+                    const usedQuantity = Math.min(availableQuantity, remainingAmount);
+                    const newQuantity = availableQuantity - usedQuantity;
+
+                    if (newQuantity > 0) {
+                        updatedTxInfo.push({
+                        txHash: txInfo.txHash,
+                        quantity: newQuantity,
+                        timestamp: txInfo.timestamp,
+                        });
+                    }
+                    remainingAmount -= usedQuantity;
+                    }
+                    if (remainingAmount > 0) {
+                    alert(`Insufficient stock for ${coffeeName} (${beanType})`);
+                    return;
+                    }
+
+                    // Update the product's TxInfo and quantity in the Vuex store
+                    const newTotalQuantity = updatedTxInfo.reduce((sum, tx) => sum + Number(tx.quantity), 0);
+                    this.$store.dispatch('updateConfirmedProductionAfterOrder', {
+                    coffeeName,
+                    beanType,
+                    newQuantity: newTotalQuantity,
+                    newTxInfo: updatedTxInfo,
+                    });
+                } else {
+                    alert(`${coffeeName} (${beanType}) cannot be found`);
+                    return;
+                }
                 }
 
                 if (!this.loggedUser.manager) {
