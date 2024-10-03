@@ -11,6 +11,7 @@ contract CoffeeProduction {
         string coffeeType;
         uint256 quantity;
         uint256 timestamp;
+        uint256 price; // Added price field
         ApprovalStatus status;
         address producer;
     }
@@ -23,6 +24,7 @@ contract CoffeeProduction {
         string coffeeName,
         string coffeeType,
         uint256 quantity,
+        uint256 price, // Include price in event
         uint256 timestamp,
         ApprovalStatus status,
         address indexed producer
@@ -34,10 +36,11 @@ contract CoffeeProduction {
     );
 
     // Record a new coffee production
-    function recordProduction(string memory coffeeName, string memory coffeeType, uint256 quantity) public {
+    function recordProduction(string memory coffeeName, string memory coffeeType, uint256 quantity, uint256 price) public {
         require(bytes(coffeeType).length > 0, "Coffee type is required.");
         require(bytes(coffeeName).length > 0, "Coffee name is required.");
         require(quantity > 0, "Quantity must be greater than 0.");
+        require(price > 0, "Price must be greater than 0."); // Added price validation
 
         uint256 currentTimestamp = block.timestamp;
 
@@ -46,6 +49,7 @@ contract CoffeeProduction {
             coffeeType: coffeeType,
             quantity: quantity,
             timestamp: currentTimestamp,
+            price: price, // Store price
             status: ApprovalStatus.Registering,
             producer: msg.sender
         });
@@ -57,6 +61,7 @@ contract CoffeeProduction {
             coffeeName,
             coffeeType,
             quantity,
+            price, // Include price in event
             currentTimestamp,
             ApprovalStatus.Registering,
             msg.sender

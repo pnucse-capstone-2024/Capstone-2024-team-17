@@ -30,6 +30,7 @@
                 <p><strong>Transaction Hash:</strong> <span class="break-word">{{ transactionInfo.txHash }}</span></p>
                 <p><strong>Block Number:</strong> {{ transactionInfo.blockNumber }}</p>
                 <p><strong>Production Time:</strong> {{ transactionInfo.blockTime }}</p>
+                <p><strong>Total Price:</strong> {{ transactionInfo.totalPrice }} ETH</p> 
               </div>
               </div>
           </section>
@@ -46,6 +47,8 @@ import readJson from '../services/JsonService.js';
 import Web3 from 'web3';
 import CoffeeProductionContract from '../abi/CoffeeProduction.json';
 import AccountContract from '../abi/AccountContract.json';
+import coffeeData from '../../public/data/coffee.json'; // coffee.json 로드
+import optionData from '../../public/data/option.json'; // 옵션 데이터 로드
 
 export default {
   name: 'ManageProduct',
@@ -63,14 +66,38 @@ export default {
       coffeeId: 0,
       web3: null,
       transactionInfo: null,
-      contractAddress: '0xe2Fa463Ffb77eC310f69461361351B59E2A79479',
+      contractAddress: '0xc471914D0734FA91207C60351F1137798F50aA3a',
       accountContract: null,
-      accountContractAddress: '0x79Cd64F2D9EF361Af8c96e49C1Be367340dB5ab0',
+      accountContractAddress: '0x0e9a29cFaE91815375398b94f8eb9C668959a57E',
+      coffeePriceList: [], // 커피 데이터를 저장할 배열
+      optionsPrices: [] // 타입 수수료 데이터를 저장할 배열
     };
   },
   methods: {
     close() {
       this.$router.push({ name: 'products-page' });
+    },
+    loadCoffeeData() {
+      this.coffeePriceList = coffeeData; // coffee.json 데이터를 배열에 저장
+      console.log('Loaded coffeePriceList:', this.coffeePriceList);
+
+      this.optionsPrices = optionData; // 옵션 데이터를 배열에 저장
+      console.log('Loaded optionsPrices:', this.optionsPrices);
+    },
+    // Calculate option fee
+    calculateOptionFee(feeType) {
+      const option = this.optionsPrices.find(opt => opt.type === feeType);
+      return option ? Number(option.fee) : 0;
+    },
+    // Calculate each price
+    calculateEachPrice(price, feeType) {
+      const optionFee = this.calculateOptionFee(feeType);
+      return price + optionFee;
+    },
+    // Calculate total price
+    calculateTotalPrice(price, feeType, quantity) {
+      const eachPrice = this.calculateEachPrice(price, feeType);
+      return eachPrice * quantity * 5;
     },
 
     async saveProduction() {
@@ -83,13 +110,25 @@ export default {
           status: this.status
         };
 
+        // 총 가격 계산
+        const coffeeItem = [...this.coffeePriceList.values()].find(item => item.coffeeName === this.coffeeName);
+        if (!coffeeItem) {
+          console.error(`Coffee item not found for ${this.coffeeName}`);
+          alert('Coffee item not found.');
+          return;
+        }
+
+        const basePrice = Number(coffeeItem.price); // 커피 기본 가격
+        const totalPrice = this.calculateTotalPrice(basePrice, productionData.beanType, productionData.quantity);
+        productionData.totalPrice = totalPrice;
+
         try {
           const estimatedGas = await this.contract.methods
-            .recordProduction(productionData.coffeeName, productionData.beanType, productionData.quantity)
+            .recordProduction(productionData.coffeeName, productionData.beanType, productionData.quantity, productionData.totalPrice)
             .estimateGas({ from: this.accounts[userId] });
 
           const tx = await this.contract.methods
-            .recordProduction(productionData.coffeeName, productionData.beanType, productionData.quantity)
+            .recordProduction(productionData.coffeeName, productionData.beanType, productionData.quantity, productionData.totalPrice)
             .send({
               from: this.accounts[userId],
               gas: estimatedGas,
@@ -98,11 +137,13 @@ export default {
           this.transactionInfo = {
             txHash: tx.transactionHash,
             blockNumber: tx.blockNumber,
-            gasUsed: tx.gasUsed,
             blockTime: new Date().toLocaleString(),
+            totalPrice: productionData.totalPrice,
           };
 
-          // Save TxHash to AccountContract
+          alert(`Production recorded successfully!`);
+
+          // AccountContract에 유저 ID와 트랜잭션 해시 저장
           const estimatedGasForAddString = await this.accountContract.methods
             .addString(tx.transactionHash)
             .estimateGas({ from: this.accounts[userId] });
@@ -114,12 +155,11 @@ export default {
               gas: estimatedGasForAddString,
             });
 
-          alert(`Production recorded successfully!`);
 
-          // 기존 생산 데이터에서 해당 항목 제거 (체크된 항목 삭제)
+          // Emit event to parent
           this.$emit('production-saved', productionData);
 
-          // Vuex에 저장
+          // Store in Vuex
           this.$store.commit('addProduction', productionData);
 
         } catch (error) {
@@ -130,6 +170,7 @@ export default {
         alert('Please select a coffee type, coffee name, or enter a valid production quantity.');
       }
     },
+
 
     loadJson() {
       readJson.getJson('option')
@@ -161,6 +202,7 @@ export default {
     this.accounts = await this.web3.eth.getAccounts();
     this.contract = new this.web3.eth.Contract(CoffeeProductionContract.abi, this.contractAddress);
     this.accountContract = new this.web3.eth.Contract(AccountContract.abi, this.accountContractAddress);
+    this.loadCoffeeData();
     this.loadJson();
   },
 };

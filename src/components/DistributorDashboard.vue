@@ -23,7 +23,7 @@
                 Coffee: {{ product.coffeeName }} -
                 Type: {{ product.coffeeType }} -
                 Quantity: {{ product.quantity }}kg -
-                **Total Price: {{ (product.totalPrice.toFixed(4))* 0.5 }} ETH** -
+                **Total Price: {{ product.price }} ETH** -
                 Status: {{ getStatusText(product.status) }}
                 <button class="check-btn" @click="handleApproveClick(product)">✅</button>
                 <button class="delete-btn" @click="rejectProduction(product.productionId)">❌</button>
@@ -60,8 +60,6 @@
 import Web3 from 'web3';
 import CoffeeProductionContract from '../abi/CoffeeProduction.json';
 import AccountContract from '../abi/AccountContract.json';
-import coffeeData from '../../public/data/coffee.json'; // coffee.json 로드
-import optionData from '../../public/data/option.json'; // 옵션 데이터 로드
 
 export default {
   data() {
@@ -75,13 +73,11 @@ export default {
       accounts: [],
       contract: null,
       productions: [],
-      ProductionContractAddress: '0xe2Fa463Ffb77eC310f69461361351B59E2A79479',
+      ProductionContractAddress: '0xc471914D0734FA91207C60351F1137798F50aA3a',
       productionIdToTxHash: {},
       accountContract: null,
-      AccountContractAddress: '0x79Cd64F2D9EF361Af8c96e49C1Be367340dB5ab0',
-      logedUser: JSON.parse(sessionStorage.getItem('logeduser')),
-      coffeeList: [], // 커피 데이터를 저장할 배열
-      options: [], // 타입 수수료 데이터를 저장할 배열
+      AccountContractAddress: '0x0e9a29cFaE91815375398b94f8eb9C668959a57E',
+      logedUser: JSON.parse(sessionStorage.getItem('logeduser'))
     };
   },
   computed: {
@@ -104,10 +100,8 @@ export default {
         console.log('approveProduction 완료');
 
         // 미리 계산된 totalPrice 사용
-        const totalPrice = product.totalPrice;
-        const halfPrice = totalPrice * 0.5;
-
-        console.log(`Total price: ${totalPrice}, Half price: ${halfPrice}`);
+        const totalPrice = product.price;
+        const halfPrice = totalPrice;
 
         // 이더로 변환
         const halfPriceInWei = this.web3.utils.toWei(halfPrice.toString(), 'ether');
@@ -217,23 +211,6 @@ export default {
           const statusNum = Number(production.status);
 
           if (statusNum === 0) {
-            // 총 금액 계산 로직 추가 시작
-            const coffeeName = production.coffeeName;
-            const beanType = production.coffeeType;
-            const quantity = Number(production.quantity);
-
-            // coffeeList에서 해당 커피의 가격 찾기
-            const coffeeItem = this.coffeeList.find(item => item.coffeeName === coffeeName);
-            if (!coffeeItem) {
-              console.error(`Coffee item not found for ${coffeeName}`);
-              production.totalPrice = 0;
-            } else {
-              const price = Number(coffeeItem.price);
-              const totalPrice = this.calculateTotalPrice(price, beanType, quantity);
-              production.totalPrice = totalPrice;
-            }
-            // 총 금액 계산 로직 추가 끝
-
             productions.push({ ...production, productionId: i, status: production.status });
           }
         }
@@ -246,7 +223,7 @@ export default {
         console.error('Error fetching productions:', error);
         alert('Error fetching production data');
       }
-    },
+  },
   async getProductionEvents() {
     try {
       const events = await this.contract.getPastEvents('ProductionRecorded', {
@@ -310,28 +287,6 @@ export default {
       alert('Error rejecting production');
     }
   },
-  // 타입 수수료 계산 메서드
-  calculateOptionFee(feeType) {
-      const option = this.options.find(opt => opt.type === feeType);
-      return option ? option.fee : 0;
-    },
-    // 개별 가격 계산 메서드
-    calculateEachPrice(price, feeType) {
-      const optionFee = this.calculateOptionFee(feeType);
-      return price + optionFee;
-    },
-    // 총 가격 계산 메서드
-    calculateTotalPrice(price, feeType, quantity) {
-      const eachPrice = this.calculateEachPrice(price, feeType);
-      return eachPrice * quantity * 10;
-    },
-    loadCoffeeData() {
-      this.coffeeList = coffeeData; // coffee.json 데이터를 배열에 저장
-      console.log('Loaded coffeeList:', this.coffeeList);
-
-      this.options = optionData; // 옵션 데이터를 배열에 저장
-      console.log('Loaded options:', this.options);
-    },
   submitShippingInfo() {
     alert(`Shipping to ${this.shippingInfo.address} on ${this.shippingInfo.date}`);
     this.shippingInfo.address = '';
@@ -343,7 +298,6 @@ async mounted() {
   this.accounts = await this.web3.eth.getAccounts();
   this.contract = new this.web3.eth.Contract(CoffeeProductionContract.abi, this.ProductionContractAddress);
   this.accountContract = new this.web3.eth.Contract(AccountContract.abi, this.AccountContractAddress);
-  this.loadCoffeeData();
   await this.fetchProductions();
 }
 };

@@ -20,6 +20,7 @@
                 <p><strong>Coffee Type:</strong> {{ eventData.coffeeType }}</p>
                 <p><strong>Yield (kg):</strong> {{ eventData.quantity }}</p>
                 <p><strong>Production Date:</strong> {{ formatTimestamp(Number(eventData.timestamp)) }}</p>
+                <p><strong>Price:</strong> {{ eventData.totalPrice }}</p>
                 <p><strong>Producer:</strong> {{ eventData.producer }}</p>
                 <p>
                   <strong>Status:</strong> 
@@ -61,8 +62,8 @@
         eventData: null,
         contract: null,
         web3: null,
-        ProductionContractAddress: '0xe2Fa463Ffb77eC310f69461361351B59E2A79479',
-        AccountContractAddress: '0x79Cd64F2D9EF361Af8c96e49C1Be367340dB5ab0',
+        ProductionContractAddress: '0xc471914D0734FA91207C60351F1137798F50aA3a',
+        AccountContractAddress: '0x0e9a29cFaE91815375398b94f8eb9C668959a57E',
         accountContract: null,
         storedTxHashes: [],
         accounts: [],
@@ -171,6 +172,7 @@
             coffeeType: production.coffeeType,
             quantity: production.quantity,
             timestamp: production.timestamp,
+            totalPrice: production.price,
             producer: production.producer,
             status: production.status,
           };
