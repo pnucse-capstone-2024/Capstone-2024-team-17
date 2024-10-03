@@ -5,7 +5,8 @@ export const store = createStore({
   state: {
     coffeeProductions: [], // Seller가 입력한 데이터를 저장
     confirmedProductions: [],
-    shoppingCart: {}
+    shoppingCart: {},
+    orderInfo: {}
   },
   mutations: {
     // production
@@ -80,6 +81,18 @@ export const store = createStore({
     clearShoppingCart(state, userId) {
       state.shoppingCart[userId] = [];
     },
+    // order information
+    addOrderInfo(state, { userId, production }) {
+      if (!state.orderInfo[userId]) {
+        state.orderInfo[userId] = [];
+      }
+      state.orderInfo[userId].push(production);
+    },
+    removeOrderInfo(state, { userId, index }) {
+      if (state.orderInfo[userId]) {
+        state.orderInfo[userId].splice(index, 1);
+      }
+    },
   },
   actions: {
     addCoffeeProduction({ commit }, production) {
@@ -111,6 +124,13 @@ export const store = createStore({
     clearCoffeeShoppingCart({ commit }, userId) {
       commit('clearShoppingCart', userId);
     },
+    // order information
+    addCoffeeOrderInfo({ commit }, { userId, production }) {
+      commit('addOrderInfo', { userId, production });
+    },
+    deleteCoffeeOrderInfo({ commit }, { userId, index }) {
+      commit('removeOrderInfo', { userId, index });
+    },
   },
   getters: {
     getCoffeeProductions: state => {
@@ -121,6 +141,9 @@ export const store = createStore({
     },
     getShoppingCart: (state) => (userId) => {
       return state.shoppingCart[userId] || [];
+    },
+    getOrderInfo: (state) => (userId) => {
+      return state.orderInfo[userId] || [];
     },
   },
   plugins: [createPersistedState()] // vuex-persistedstate 플러그인 추가

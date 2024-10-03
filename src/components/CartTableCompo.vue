@@ -172,15 +172,19 @@ export default {
             const userId = this.logedUser.id;
             const shoppingCart = this.getShoppingCart(userId);
 
+            if (shoppingCart.length == 0) {
+                alert("Please add your product.");
+                return;
+            }
+            if (!this.shipAddr || !this.shipTel) {
+                alert('Address and phone number are required.');
+                return;
+            }
             if (!this.chBox) {
                 alert("Please agree to the terms and conditions.");
                 return;
             }
 
-            if (shoppingCart.length == 0) {
-                alert("Please add your product.");
-                return;
-            }
 
             try {
                 for (let coffee of shoppingCart) {
@@ -231,7 +235,7 @@ export default {
                         value: commissionWei,
                     });
                 }
-
+                
                 // 모든 구매가 완료된 후 장바구니에서 아이템을 제거합니다.
                 this.clearCoffeeShoppingCart(userId);
 
