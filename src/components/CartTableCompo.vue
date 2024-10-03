@@ -4,8 +4,6 @@
             <thead v-if="userShoppingCart.length !== 0">
                 <tr>
                     <th>Product</th>
-                    <th>Origin</th>
-                    <th>P-day</th>
                     <th>Type</th>
                     <th>Price</th>
                     <th>Amount</th>
@@ -16,10 +14,6 @@
             <tbody>
                 <tr v-for="(coffee, idx) in userShoppingCart" :key="idx">
                 <td scope="row">{{ coffee.coffeeName }}</td>
-                <td v-if="coffee.origin !== ''">{{ coffee.origin }}</td>
-                <td v-else>-</td>
-                <td v-if="coffee.pDay !== ''">{{ coffee.pDay }}</td>
-                <td v-else>-</td>
                 <td v-if="coffee.bType !== ''">{{ coffee.bType }}</td>
                 <td>{{ calculateEachPrice(coffee.price, coffee.bType) }}</td>
                 <td>{{ coffee.amount }}</td>
@@ -36,10 +30,11 @@
                 <ul v-for="(coffee,idx) in userShoppingCart" :key="idx">
                     <li>
                         <p><span style="margin-left: 10px;">{{coffee.coffeeName}}</span> x {{coffee.amount}}(100g, {{coffee.bType}})</p>
+                        <p><span style="margin-left: 10px;">- Origin: {{ExtractTheFirstWord(coffee.coffeeName)}}</span></p>
                         <!-- Display P-days and quantities -->
                         <ul>
                             <li v-for="(tx, txIdx) in coffee.txInfo" :key="txIdx">
-                            P-day {{ txIdx + 1 }}: {{ tx.timestamp }}, {{ tx.quantity }} units
+                            Production day {{ txIdx + 1 }}: {{ formatTimestamp(tx.timestamp) }}, {{ tx.quantity }} units
                             </li>
                         </ul>
                     </li>
@@ -106,6 +101,12 @@ export default {
     methods: {
         ...mapActions(['updateConfirmedProductionQuantity', 'deleteCoffeeShoppingCart', 'clearCoffeeShoppingCart']),
         
+        
+        ExtractTheFirstWord(coffeeName){
+            const words = coffeeName.trim().split(" "); // 공백을 기준으로 분리
+            const firstWord = words[0];  // 첫 번째 단어 추출
+            return firstWord;
+        },
         calculateOptionFee(feeType) {
             switch (feeType) {
                 case 'Whole beans':
@@ -119,6 +120,10 @@ export default {
                 default:
                     return 0;
             }
+        },
+        formatTimestamp(unixTimestamp) {
+            const date = new Date(unixTimestamp * 1000);
+            return date.toLocaleString('en-US');
         },
         calculateEachPrice(price, feeType) {
             const optionFee = this.calculateOptionFee(feeType);

@@ -8,6 +8,7 @@
           <div>
             <h2>Production Tracking</h2>
             <!-- TxHash 입력 필드 -->
+            <h3>Transaction Production Data</h3>
             <div>
               <input type="text" v-model="txHashInput" placeholder="Transaction Hash" />
               <button @click="fetchEventData">Fetch Blockchain Data</button>
@@ -15,7 +16,6 @@
 
             <!-- 이벤트 데이터 표시 -->
             <div v-if="eventData">
-              <h3>Transaction {{ txHashInput }} Production Data</h3>
               <p><strong>Coffee Origin:</strong> {{ eventData.coffeeName }}</p>
               <p><strong>Coffee Type:</strong> {{ eventData.coffeeType }}</p>
               <p><strong>Yield (kg):</strong> {{ eventData.quantity }}</p>
@@ -183,32 +183,31 @@ export default {
       }
     },
     async fetchBlockTimestamp(txHash) {
-  try {
-    const transaction = await this.web3.eth.getTransaction(txHash);
-    if (!transaction) {
-      alert('Transaction not found');
-      return;
-    }
+      try {
+        const transaction = await this.web3.eth.getTransaction(txHash);
+        if (!transaction) {
+          alert('Transaction not found');
+          return;
+        }
 
-    const block = await this.web3.eth.getBlock(transaction.blockNumber);
-    if (!block) {
-      alert('Block not found');
-      return;
-    }
+        const block = await this.web3.eth.getBlock(transaction.blockNumber);
+        if (!block) {
+          alert('Block not found');
+          return;
+        }
 
-    const timestamp = Number(block.timestamp); // 타임스탬프를 Number로 변환
-    console.log('Block Timestamp:', timestamp);
+        const timestamp = Number(block.timestamp); // 타임스탬프를 Number로 변환
+        console.log('Block Timestamp:', timestamp);
 
-    // Vue 3에서는 객체에 동적으로 값을 추가해도 반응형이 유지됨
-    this.timestamps[txHash] = timestamp; // 직접 할당
+        // Vue 3에서는 객체에 동적으로 값을 추가해도 반응형이 유지됨
+        this.timestamps[txHash] = timestamp; // 직접 할당
 
-    return timestamp;
-  } catch (error) {
-    console.error('Error fetching block timestamp:', error);
-    alert('An error occurred while fetching the block timestamp');
-  }
-}
-,
+        return timestamp;
+      } catch (error) {
+        console.error('Error fetching block timestamp:', error);
+        alert('An error occurred while fetching the block timestamp');
+      }
+    },
 async getStoredTxHashes() {
   const userId = this.logedUser.id;
   try {
