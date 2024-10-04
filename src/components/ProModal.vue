@@ -201,7 +201,7 @@ export default {
       );
 
       if (product) {
-        const quantity = product.quantity; // 100g 단위로 변환
+        const quantity = product.quantity;
         return quantity;
       } else {
         console.log('Product not found.');

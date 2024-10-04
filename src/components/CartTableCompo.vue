@@ -30,11 +30,14 @@
                 <ul v-for="(coffee,idx) in userShoppingCart" :key="idx">
                     <li>
                         <p><span style="margin-left: 10px;">{{coffee.coffeeName}}</span> x {{coffee.amount}}(100g, {{coffee.bType}})</p>
-                        <p><span style="margin-left: 10px;">- Origin: {{ExtractTheFirstWord(coffee.coffeeName)}}</span></p>
+                        <p>
+                            <span style="margin-left: 10px;">- Origin: {{ getOrigin(coffee.coffeeName) }}</span>
+                        </p>
+                        <p><span style="margin-left: 10px;">- Production day:</span></p>
                         <!-- Display P-days and quantities -->
                         <ul>
                             <li v-for="(tx, txIdx) in coffee.txInfo" :key="txIdx">
-                            Production day {{ txIdx + 1 }}: {{ formatTimestamp(tx.timestamp) }}, {{ tx.quantity }} units
+                                {{ txIdx + 1 }}. {{ formatTimestamp(tx.timestamp) }}, {{ tx.quantity }} units
                             </li>
                         </ul>
                     </li>
@@ -66,6 +69,7 @@
 import Web3 from 'web3';
 import CoffeeContract from '../abi/PaymentContract.json';
 import { mapActions, mapGetters } from 'vuex';
+import coffeeData from '../../public/data/coffee.json'; // Import coffee.json
 
 export default {
     name: 'CartTableCompo',
@@ -102,10 +106,9 @@ export default {
         ...mapActions(['updateConfirmedProductionQuantity', 'deleteCoffeeShoppingCart', 'clearCoffeeShoppingCart']),
         
         
-        ExtractTheFirstWord(coffeeName){
-            const words = coffeeName.trim().split(" "); // 공백을 기준으로 분리
-            const firstWord = words[0];  // 첫 번째 단어 추출
-            return firstWord;
+        getOrigin(coffeeName) {
+            const coffeeItem = coffeeData.find(item => item.coffeeName === coffeeName);
+            return coffeeItem ? coffeeItem.origin : 'Unknown';
         },
         calculateOptionFee(feeType) {
             switch (feeType) {

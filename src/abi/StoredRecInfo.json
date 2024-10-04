@@ -1,0 +1,56 @@
+{
+    "abi":
+    [
+        {
+            "inputs": [
+                {
+                    "internalType": "string",
+                    "name": "_txHash",
+                    "type": "string"
+                }
+            ],
+            "name": "addString",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "inputs": [],
+            "name": "getAllStrings",
+            "outputs": [
+                {
+                    "components": [
+                        {
+                            "internalType": "uint256",
+                            "name": "timestamp",
+                            "type": "uint256"
+                        },
+                        {
+                            "internalType": "string",
+                            "name": "txHash",
+                            "type": "string"
+                        }
+                    ],
+                    "internalType": "struct AccountStringStorage.DataEntry[]",
+                    "name": "",
+                    "type": "tuple[]"
+                }
+            ],
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "inputs": [],
+            "name": "getStringCount",
+            "outputs": [
+                {
+                    "internalType": "uint256",
+                    "name": "",
+                    "type": "uint256"
+                }
+            ],
+            "stateMutability": "view",
+            "type": "function"
+        }
+    ]
+}

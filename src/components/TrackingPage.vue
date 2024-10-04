@@ -32,7 +32,7 @@
             </div>
 
             <!-- 저장된 TxHash 목록 표시 -->
-            <div>
+            <!-- <div>
               <h3>Stored My Transaction Hashes</h3>
               <button @click="getStoredTxHashes">Refresh Stored TxHashes</button>
               <ul>
@@ -41,7 +41,7 @@
                     {{ getStatusText(timestamps[txHash].status).text }}
                   </span>, {{ txHash }}</li>
               </ul>
-            </div>
+            </div> -->
 
           </div>
         </div>
@@ -53,7 +53,7 @@
 <script>
 import Web3 from 'web3';
 import CoffeeProductionContract from '../abi/CoffeeProduction.json';
-import AccountContract from '../abi/AccountContract.json';
+import StoredProInfoContract from '../abi/StoredProInfo.json';
 
 export default {
   data() {
@@ -62,9 +62,9 @@ export default {
       eventData: null,
       contract: null,
       web3: null,
-      ProductionContractAddress: '0xc471914D0734FA91207C60351F1137798F50aA3a',
-      AccountContractAddress: '0x0e9a29cFaE91815375398b94f8eb9C668959a57E',
-      accountContract: null,
+      ProductionContractAddress: '0xA93Ce7a8de36b4BcDb0D44fC6Da7a1B864F04d90',
+      StoredProInfoContractAddress: '0xE5CCE88FC2d8429323ADb9d046AA47920e1fF783',
+      StoredProInfoContract: null,
       storedTxHashes: [],
       accounts: [],
       timestamps: {},
@@ -211,7 +211,7 @@ export default {
 async getStoredTxHashes() {
   const userId = this.logedUser.id;
   try {
-    const txHashes = await this.accountContract.methods.getAllStrings().call({ from: this.accounts[userId] });
+    const txHashes = await this.StoredProInfoContract.methods.getAllStrings().call({ from: this.accounts[userId] });
     this.storedTxHashes = txHashes;
 
     // 각 해시의 타임스탬프와 상태를 가져옴
@@ -233,7 +233,7 @@ async getStoredTxHashes() {
     this.isDistributor = this.logedUser.distributor;
     this.accounts = await this.web3.eth.getAccounts();
     this.contract = new this.web3.eth.Contract(CoffeeProductionContract.abi, this.ProductionContractAddress);
-    this.accountContract = new this.web3.eth.Contract(AccountContract.abi, this.AccountContractAddress);
+    this.StoredProInfoContract = new this.web3.eth.Contract(StoredProInfoContract.abi, this.StoredProInfoContractAddress);
     await this.getStoredTxHashes();
   },
 };

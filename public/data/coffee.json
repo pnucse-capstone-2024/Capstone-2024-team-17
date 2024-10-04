@@ -2,72 +2,84 @@
     {
       "pId": 0,
       "coffeeName": "Guatemala Antigua",
+      "origin": "Guatemala",
       "price": 4.00,
       "description": "Bright acidity and a complex flavor profile"
     },
     {
       "pId": 1,
       "coffeeName": "Kenya Gatagua AA",
+      "origin": "Kenya",
       "price": 3.00,
       "description": "Strong acidity and fruity notes"
     },
     {
       "pId": 2,
       "coffeeName": "Indonesia Sumatra Mandhelling",
+      "origin": "Indonesia",
       "price": 3.50,
       "description": "Full body, earthy tones, and spicy flavor"
     },
     {
       "pId": 3,
       "coffeeName": "Colombia Medellin Supremo",
+      "origin": "Colombia",
       "price": 5.60,
       "description": "Smooth and well-balanced taste"
     },
     {
       "pId": 4,
       "coffeeName": "Ethiopia Yirgacheffe",
+      "origin": "Ethiopia",
       "price": 4.80,
       "description": "Bright acidity, floral notes, and fruity flavor"
     },
     {
       "pId": 5,
       "coffeeName": "Brazil Cerrado",
+      "origin": "Brazil",
       "price": 3.50,
       "description": "Nutty flavor and smooth body"
     },
     {
       "pId": 6,
       "coffeeName": "Vietnam Robusta",
+      "origin": "Vietnam",
       "price": 5.60,
       "description": "High caffeine content and a strong, bitter taste"
     },
     {
       "pId": 7,
       "coffeeName": "Costa Rica Tarrazu",
+      "origin": "Costa Rica",
       "price": 3.50,
       "description": "A well-balanced flavor with a good mix of acidity and sweetness"
     },
     {
       "pId": 8,
       "coffeeName": "Aurora Venecia Natural",
+      "origin": "Nicaragua",
       "price": 7.40,
       "description": "A high-quality natural process coffee"
     },
     {
       "pId": 9,
       "coffeeName": "Peru Penachi",
+      "origin": "Peru",
       "price": 5.30,
       "description": "Balanced flavor and smooth acidity"
     },
     {
       "pId": 10,
       "coffeeName": "Las Rosas",
+      "origin": "Colombia",
       "price": 4.00,
       "description": "Unique flavors of its origin"
     },
     {
       "pId": 11,
       "coffeeName": "MURAMBA",
+      "origin": "Burundi",
       "price": 5.20,
       "description": "Fruity notes and bright acidity"
     }

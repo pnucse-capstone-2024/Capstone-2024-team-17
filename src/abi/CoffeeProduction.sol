@@ -9,9 +9,10 @@ contract CoffeeProduction {
     struct Production {
         string coffeeName;
         string coffeeType;
+        string origin; // Added origin field
         uint256 quantity;
         uint256 timestamp;
-        uint256 price; // Added price field
+        uint256 price; // Existing price field
         ApprovalStatus status;
         address producer;
     }
@@ -23,6 +24,7 @@ contract CoffeeProduction {
         uint256 productionId,
         string coffeeName,
         string coffeeType,
+        string origin, // Include origin in event
         uint256 quantity,
         uint256 price, // Include price in event
         uint256 timestamp,
@@ -36,20 +38,28 @@ contract CoffeeProduction {
     );
 
     // Record a new coffee production
-    function recordProduction(string memory coffeeName, string memory coffeeType, uint256 quantity, uint256 price) public {
+    function recordProduction(
+        string memory coffeeName,
+        string memory coffeeType,
+        string memory origin, // Added origin parameter
+        uint256 quantity,
+        uint256 price
+    ) public {
         require(bytes(coffeeType).length > 0, "Coffee type is required.");
         require(bytes(coffeeName).length > 0, "Coffee name is required.");
+        require(bytes(origin).length > 0, "Origin is required."); // Validate origin
         require(quantity > 0, "Quantity must be greater than 0.");
-        require(price > 0, "Price must be greater than 0."); // Added price validation
+        require(price > 0, "Price must be greater than 0.");
 
         uint256 currentTimestamp = block.timestamp;
 
         Production memory newProduction = Production({
             coffeeName: coffeeName,
             coffeeType: coffeeType,
+            origin: origin, // Store origin
             quantity: quantity,
             timestamp: currentTimestamp,
-            price: price, // Store price
+            price: price,
             status: ApprovalStatus.Registering,
             producer: msg.sender
         });
@@ -60,8 +70,9 @@ contract CoffeeProduction {
             productionCount,
             coffeeName,
             coffeeType,
+            origin, // Emit origin in event
             quantity,
-            price, // Include price in event
+            price,
             currentTimestamp,
             ApprovalStatus.Registering,
             msg.sender

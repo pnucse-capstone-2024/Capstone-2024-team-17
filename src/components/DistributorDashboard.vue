@@ -59,7 +59,7 @@
 <script>
 import Web3 from 'web3';
 import CoffeeProductionContract from '../abi/CoffeeProduction.json';
-import AccountContract from '../abi/AccountContract.json';
+import StoredRecInfoContract from '../abi/StoredRecInfo.json'; // Import StoredRecInfo ABI
 
 export default {
   data() {
@@ -73,26 +73,14 @@ export default {
       accounts: [],
       contract: null,
       productions: [],
-      ProductionContractAddress: '0xc471914D0734FA91207C60351F1137798F50aA3a',
+      ProductionContractAddress: '0xA93Ce7a8de36b4BcDb0D44fC6Da7a1B864F04d90', // Update with your contract address
       productionIdToTxHash: {},
-      accountContract: null,
-      AccountContractAddress: '0x0e9a29cFaE91815375398b94f8eb9C668959a57E',
+      StoredRecInfoContract: null,
+      StoredRecInfoContractAddress: '0x918251dC459A9B83049da003c267b117CFB745F4', // Update with your contract address
       logedUser: JSON.parse(sessionStorage.getItem('logeduser'))
     };
   },
-  computed: {
-      coffeeProductions() {
-        return this.$store.getters.getCoffeeProductions; // Vuex에서 데이터 조회
-      }
-    },
   methods: {
-    bigIntToString(obj) {
-      return JSON.parse(
-        JSON.stringify(obj, (key, value) =>
-          typeof value === 'bigint' ? value.toString() : value
-        )
-      );
-    },
     async handleApproveClick(product) {
       try {
         // Approve the production
@@ -124,22 +112,31 @@ export default {
         // Get the txHash associated with the productionId
         const txHash = this.productionIdToTxHash[product.productionId];
 
-        // Fetch the transaction receipt to get the timestamp
+        // Store the (timestamp, txHash) pair in StoredRecInfo contract
+        if (txHash) {
+          const userId = this.logedUser.id;
+          const estimatedGas = await this.StoredRecInfoContract.methods.addString(txHash).estimateGas({ from: this.accounts[userId] });
+          await this.StoredRecInfoContract.methods.addString(txHash).send({ from: this.accounts[userId], gas: estimatedGas });
+          alert('Transaction hash stored in StoredRecInfo contract');
+        } else {
+          console.warn('No txHash found for productionId:');
+        }
+
+        // Update confirmedProductions in Vuex store
         const txReceipt = await this.web3.eth.getTransactionReceipt(txHash);
         const block = await this.web3.eth.getBlock(txReceipt.blockNumber);
         const timestamp = block.timestamp;
 
-        // Prepare txInfo object
         const txInfo = {
           txHash: txHash,
           quantity: Number(product.quantity),
           timestamp: Number(timestamp), // Ensure timestamp is a Number
         };
 
-        // Update confirmedProductions in Vuex store
         this.$store.dispatch('addOrUpdateConfirmedProduction', {
           coffeeName: product.coffeeName,
           beanType: product.coffeeType,
+          origin: product.origin,
           quantity: Number(product.quantity),
           txInfo: txInfo,
         });
@@ -153,11 +150,9 @@ export default {
     getStatusText(status) {
       let statusNum;
 
-      // BigNumber와 마찬가지로 BigInt도 처리
       if (typeof status === 'bigint') {
-        statusNum = Number(status); // BigInt를 일반 숫자로 변환
-      }
-      else if (typeof status === 'object' && status.toNumber) {
+        statusNum = Number(status); // Convert BigInt to Number
+      } else if (typeof status === 'object' && status.toNumber) {
         statusNum = status.toNumber();
       } else if (typeof status === 'string') {
         if (status.startsWith('0x')) {
@@ -168,7 +163,7 @@ export default {
       } else if (typeof status === 'number') {
         statusNum = status;
       } else {
-        console.warn('알 수 없는 status 형식:', status);
+        console.warn('Unknown status format:', status);
         return 'Unknown';
       }
 
@@ -205,90 +200,65 @@ export default {
         console.error('Error fetching productions:', error);
         alert('Error fetching production data');
       }
-  },
-  async getProductionEvents() {
-    try {
-      const events = await this.contract.getPastEvents('ProductionRecorded', {
-        fromBlock: 0,
-        toBlock: 'latest',
-      });
+    },
+    async getProductionEvents() {
+      try {
+        const events = await this.contract.getPastEvents('ProductionRecorded', {
+          fromBlock: 0,
+          toBlock: 'latest',
+        });
 
-      for (const event of events) {
-        const productionId = event.returnValues.productionId;
-        const txHash = event.transactionHash;
-        this.productionIdToTxHash[productionId] = txHash;
+        for (const event of events) {
+          const productionId = event.returnValues.productionId;
+          const txHash = event.transactionHash;
+          this.productionIdToTxHash[productionId] = txHash;
+        }
+      } catch (error) {
+        console.error('Error fetching ProductionRecorded events:', error);
       }
-    } catch (error) {
-      console.error('Error fetching ProductionRecorded events:', error);
+    },
+    async approveProduction(productionId) {
+      try {
+        await this.contract.methods.approveProduction(productionId).send({ from: this.accounts[0] });
+        alert('Production approved');
+
+        // Remove the approved item from the list
+        this.productions = this.productions.filter(product => product.productionId !== productionId);
+      } catch (error) {
+        console.error('Error approving production:', error);
+        alert('Error approving production');
+      }
+    },
+    async rejectProduction(productionId) {
+      try {
+        await this.contract.methods.rejectProduction(productionId).send({ from: this.accounts[0] });
+        alert('Production rejected');
+
+        // Remove the rejected item from the list
+        this.productions = this.productions.filter(product => product.productionId !== productionId);
+      } catch (error) {
+        console.error('Error rejecting production:', error);
+        alert('Error rejecting production');
+      }
+    },
+    submitShippingInfo() {
+      alert(`Shipping to ${this.shippingInfo.address} on ${this.shippingInfo.date}`);
+      this.shippingInfo.address = '';
+      this.shippingInfo.date = '';
     }
   },
-  async approveProduction(productionId) {
-    try {
-      await this.contract.methods.approveProduction(productionId).send({ from: this.accounts[0] });
-      alert('Production approved');
-
-      // Remove the approved item from the list
-      this.productions = this.productions.filter(product => product.productionId !== productionId);
-
-      // Get the TxHash associated with the productionId
-      const txHash = this.productionIdToTxHash[productionId];
-      if (txHash) {
-        const userId = this.logedUser.id;
-        const estimatedGas = await this.accountContract.methods.addString(txHash).estimateGas({ from: this.accounts[userId] });
-        await this.accountContract.methods.addString(txHash).send({ from: this.accounts[userId], gas: estimatedGas });
-        alert('Transaction hash stored in AccountContract');
-      } else {
-        console.warn('No txHash found for productionId:', productionId);
-      }
-    } catch (error) {
-      console.error('Error approving production:', error);
-      alert('Error approving production');
-    }
-  },
-
-  async rejectProduction(productionId) {
-    try {
-      await this.contract.methods.rejectProduction(productionId).send({ from: this.accounts[0] });
-      alert('Production rejected');
-
-      // Remove the rejected item from the list
-      this.productions = this.productions.filter(product => product.productionId !== productionId);
-
-      // Get the TxHash associated with the productionId
-      const txHash = this.productionIdToTxHash[productionId];
-      if (txHash) {
-        const userId = this.logedUser.id;
-        const estimatedGas = await this.accountContract.methods.addString(txHash).estimateGas({ from: this.accounts[userId] });
-        await this.accountContract.methods.addString(txHash).send({ from: this.accounts[userId], gas: estimatedGas });
-        alert('Transaction hash stored in AccountContract');
-      } else {
-        console.warn('No txHash found for productionId:', productionId);
-      }
-    } catch (error) {
-      console.error('Error rejecting production:', error);
-      alert('Error rejecting production');
-    }
-  },
-  submitShippingInfo() {
-    alert(`Shipping to ${this.shippingInfo.address} on ${this.shippingInfo.date}`);
-    this.shippingInfo.address = '';
-    this.shippingInfo.date = '';
+  async mounted() {
+    this.web3 = new Web3(new Web3.providers.HttpProvider('http://127.0.0.1:7545'));
+    this.accounts = await this.web3.eth.getAccounts();
+    this.contract = new this.web3.eth.Contract(CoffeeProductionContract.abi, this.ProductionContractAddress);
+    this.StoredRecInfoContract = new this.web3.eth.Contract(StoredRecInfoContract.abi, this.StoredRecInfoContractAddress);
+    await this.fetchProductions();
   }
-},
-async mounted() {
-  this.web3 = new Web3(new Web3.providers.HttpProvider('http://127.0.0.1:7545'));
-  this.accounts = await this.web3.eth.getAccounts();
-  this.contract = new this.web3.eth.Contract(CoffeeProductionContract.abi, this.ProductionContractAddress);
-  this.accountContract = new this.web3.eth.Contract(AccountContract.abi, this.AccountContractAddress);
-  await this.fetchProductions();
-}
 };
 </script>
 
-
-
 <style scoped>
-/* 스타일은 기본 스타일과 동일 */
+/* Existing styles */
 h2 {
   font-family: 'Great Vibes', cursive;
   width: 100%;

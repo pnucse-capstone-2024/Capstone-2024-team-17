@@ -46,9 +46,9 @@
 import readJson from '../services/JsonService.js';
 import Web3 from 'web3';
 import CoffeeProductionContract from '../abi/CoffeeProduction.json';
-import AccountContract from '../abi/AccountContract.json';
-import coffeeData from '../../public/data/coffee.json'; // coffee.json 로드
-import optionData from '../../public/data/option.json'; // 옵션 데이터 로드
+import StoredProInfoContract from '../abi/StoredProInfo.json';
+import coffeeData from '../../public/data/coffee.json'; // Import coffee.json
+import optionData from '../../public/data/option.json'; // Import option.json
 
 export default {
   name: 'ManageProduct',
@@ -66,11 +66,11 @@ export default {
       coffeeId: 0,
       web3: null,
       transactionInfo: null,
-      contractAddress: '0xc471914D0734FA91207C60351F1137798F50aA3a',
-      accountContract: null,
-      accountContractAddress: '0x0e9a29cFaE91815375398b94f8eb9C668959a57E',
-      coffeePriceList: [], // 커피 데이터를 저장할 배열
-      optionsPrices: [] // 타입 수수료 데이터를 저장할 배열
+      ProductionContractAddress: '0xA93Ce7a8de36b4BcDb0D44fC6Da7a1B864F04d90', // Update with new address
+      StoredProInfoContract: null,
+      StoredProInfoContractAddress: '0xE5CCE88FC2d8429323ADb9d046AA47920e1fF783',
+      coffeePriceList: [], // To store coffee data
+      optionsPrices: [] // To store type fees
     };
   },
   methods: {
@@ -78,11 +78,8 @@ export default {
       this.$router.push({ name: 'products-page' });
     },
     loadCoffeeData() {
-      this.coffeePriceList = coffeeData; // coffee.json 데이터를 배열에 저장
-      console.log('Loaded coffeePriceList:', this.coffeePriceList);
-
-      this.optionsPrices = optionData; // 옵션 데이터를 배열에 저장
-      console.log('Loaded optionsPrices:', this.optionsPrices);
+      this.coffeePriceList = coffeeData; // Load coffee.json data
+      this.optionsPrices = optionData; // Load option.json data
     },
     // Calculate option fee
     calculateOptionFee(feeType) {
@@ -99,36 +96,48 @@ export default {
       const eachPrice = this.calculateEachPrice(price, feeType);
       return eachPrice * quantity * 5;
     },
-
     async saveProduction() {
       const userId = this.logedUser.id;
       if (this.coffeeBeanType && this.productionQty > 0 && this.coffeeName) {
-        const productionData = {
-          beanType: this.coffeeBeanType,
-          quantity: this.productionQty,
-          coffeeName: this.coffeeName,
-          status: this.status
-        };
-
-        // 총 가격 계산
-        const coffeeItem = [...this.coffeePriceList.values()].find(item => item.coffeeName === this.coffeeName);
+        // Find the coffee item in coffeePriceList
+        const coffeeItem = this.coffeePriceList.find(item => item.coffeeName === this.coffeeName);
         if (!coffeeItem) {
           console.error(`Coffee item not found for ${this.coffeeName}`);
           alert('Coffee item not found.');
           return;
         }
 
-        const basePrice = Number(coffeeItem.price); // 커피 기본 가격
+        const productionData = {
+          beanType: this.coffeeBeanType,
+          quantity: this.productionQty,
+          coffeeName: this.coffeeName,
+          origin: coffeeItem.origin, // Include origin
+          status: this.status
+        };
+
+        const basePrice = Number(coffeeItem.price); // Base price
         const totalPrice = this.calculateTotalPrice(basePrice, productionData.beanType, productionData.quantity);
         productionData.totalPrice = totalPrice;
 
         try {
           const estimatedGas = await this.contract.methods
-            .recordProduction(productionData.coffeeName, productionData.beanType, productionData.quantity, productionData.totalPrice)
+            .recordProduction(
+              productionData.coffeeName,
+              productionData.beanType,
+              productionData.origin,
+              productionData.quantity,
+              productionData.totalPrice
+            )
             .estimateGas({ from: this.accounts[userId] });
 
           const tx = await this.contract.methods
-            .recordProduction(productionData.coffeeName, productionData.beanType, productionData.quantity, productionData.totalPrice)
+            .recordProduction(
+              productionData.coffeeName,
+              productionData.beanType,
+              productionData.origin,
+              productionData.quantity,
+              productionData.totalPrice
+            )
             .send({
               from: this.accounts[userId],
               gas: estimatedGas,
@@ -143,18 +152,17 @@ export default {
 
           alert(`Production recorded successfully!`);
 
-          // AccountContract에 유저 ID와 트랜잭션 해시 저장
-          const estimatedGasForAddString = await this.accountContract.methods
+          // Store transaction hash in StoredProInfoContract
+          const estimatedGasForAddString = await this.StoredProInfoContract.methods
             .addString(tx.transactionHash)
             .estimateGas({ from: this.accounts[userId] });
 
-          await this.accountContract.methods
+          await this.StoredProInfoContract.methods
             .addString(tx.transactionHash)
             .send({
               from: this.accounts[userId],
               gas: estimatedGasForAddString,
             });
-
 
           // Emit event to parent
           this.$emit('production-saved', productionData);
@@ -170,8 +178,6 @@ export default {
         alert('Please select a coffee type, coffee name, or enter a valid production quantity.');
       }
     },
-
-
     loadJson() {
       readJson.getJson('option')
         .then(res => {
@@ -200,8 +206,8 @@ export default {
   async mounted() {
     this.web3 = new Web3(new Web3.providers.HttpProvider('http://127.0.0.1:7545'));
     this.accounts = await this.web3.eth.getAccounts();
-    this.contract = new this.web3.eth.Contract(CoffeeProductionContract.abi, this.contractAddress);
-    this.accountContract = new this.web3.eth.Contract(AccountContract.abi, this.accountContractAddress);
+    this.contract = new this.web3.eth.Contract(CoffeeProductionContract.abi, this.ProductionContractAddress);
+    this.StoredProInfoContract = new this.web3.eth.Contract(StoredProInfoContract.abi, this.StoredProInfoContractAddress);
     this.loadCoffeeData();
     this.loadJson();
   },

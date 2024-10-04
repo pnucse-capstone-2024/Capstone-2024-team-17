@@ -10,6 +10,7 @@ import ShippingInfoCompo from '../components/ShippingInfoCompo.vue'
 import DistributorDashboard from '../components/DistributorDashboard.vue'
 import ManageProduct from '../components/ManageProduct.vue'
 import TrackingPage from '../components/TrackingPage.vue'
+import ManagingPage from '../components/ManagingPage.vue'
 
 const routes = [
     {
@@ -52,6 +53,11 @@ const routes = [
         path: '/distributordashboard',
         name: 'distributor-dashboard',
         component: DistributorDashboard
+    },
+    {
+        path: '/managingpage',
+        name: 'manageingpage',
+        component: ManagingPage
     },
     {
         path: '/TrackingPage',
