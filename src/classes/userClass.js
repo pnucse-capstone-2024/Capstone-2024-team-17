@@ -9,7 +9,7 @@ export class userClass{
     distributor;
     manager;
 
-    constructor(id, first_name, last_name, username, email, member, seller, distributor, manager){
+    constructor(id, first_name, last_name, username, email, member, seller, distributor, manager, customer){
         this.id = id;
         this.first_name = first_name;
         this.last_name = last_name;
@@ -19,6 +19,7 @@ export class userClass{
         this.seller = seller;
         this.distributor = distributor;
         this.manager = manager;
+        this.customer = customer;
     }
 
     toObject(){
@@ -31,7 +32,8 @@ export class userClass{
             membership: this.membership,
             seller: this.seller,
             distributor: this.distributor,
-            manager: this.manager
+            manager: this.manager,
+            customer: this.customer
         }
     }
 

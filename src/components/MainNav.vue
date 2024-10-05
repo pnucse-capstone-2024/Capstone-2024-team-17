@@ -4,7 +4,7 @@
             <span v-show="sesssionCheck && displayName">Welcome {{displayName}}!</span>
         </aside>
         <ul v-if="sesssionCheck">
-            <li><router-link to='/home'>Home</router-link></li>
+            <li v-if="!isSeller && !isDistributor"><router-link to='/home'>Home</router-link></li>
             <li><a href="/products" @click.prevent="goToProducts">Products</a></li>
             <li v-if="!isSeller && !isDistributor"><router-link to='/recipe'>Recipes</router-link></li>
             <li v-if="!isSeller && !isDistributor && !isManager"><router-link to='/shoppingcart'>Shopping Cart</router-link></li>
