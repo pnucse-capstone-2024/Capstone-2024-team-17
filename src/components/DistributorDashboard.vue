@@ -39,17 +39,28 @@
         <!-- 배송 정보 입력 화면 -->
         <div v-if="selectedOption === 'Order Info'">
           <h3>Order Information</h3>
-          <form @submit.prevent="submitShippingInfo">
-            <div>
-              <label for="shippingAddress">Shipping Address:</label>
-              <input type="text" id="shippingAddress" v-model="shippingInfo.address" />
-            </div>
-            <div>
-              <label for="deliveryDate">Delivery Date:</label>
-              <input type="date" id="deliveryDate" v-model="shippingInfo.date" />
-            </div>
-            <button type="submit" class="btn">Submit Shipping Info</button>
-          </form>
+          <div v-if="orders.length > 0">
+            <ul>
+              <li v-for="(order, index) in orders" :key="index">
+                User ID: {{ order.userId }} |
+                Ship Address: {{ order.shipAddr }} |
+                Ship Tel: {{ order.shipTel }}
+                <ul>
+                  <li v-for="(item, idx) in order.items" :key="idx">
+                    Coffee: {{ item.coffeeName }} -
+                    Type: {{ item.bType }} -
+                    Amount: {{ item.amount }}
+                  </li>
+                </ul>
+                <button class="check-btn" @click="approveOrder(order)">✅</button>
+                <button class="delete-btn" @click="rejectOrder(order)">❌</button>
+              </li>
+            </ul>
+          </div>
+          <div v-else>
+            <p>No order data available.</p>
+          </div>
+          <button class="btn" @click="fetchOrders">Refresh Data</button>
         </div>
       </div>
     </div>
@@ -60,6 +71,7 @@
 import Web3 from 'web3';
 import CoffeeProductionContract from '../abi/CoffeeProduction.json';
 import StoredRecInfoContract from '../abi/StoredRecInfo.json'; // Import StoredRecInfo ABI
+import { mapGetters } from 'vuex';
 
 export default {
   data() {
@@ -80,6 +92,30 @@ export default {
       logedUser: JSON.parse(sessionStorage.getItem('logeduser'))
     };
   },
+  computed: {
+    ...mapGetters(['getOrderInfo']),
+    orders() {
+      // Flatten the orders from all users into a single array
+      const allOrders = [];
+      const orderInfo = this.$store.state.orderInfo;
+      for (const userId in orderInfo) {
+          const userOrders = orderInfo[userId];
+          userOrders.forEach(order => {
+            allOrders.push({
+              userId: userId,
+              shipAddr: order.shipAddr,
+              shipTel: order.shipTel,
+              items: order.items,
+            });
+          });
+      }
+      return allOrders;
+    },
+    coffeeProductions() {
+        return this.$store.getters.getCoffeeProductions; // Vuex에서 데이터 조회
+      }
+  },
+
   methods: {
     async handleApproveClick(product) {
       try {
@@ -241,11 +277,15 @@ export default {
         alert('Error rejecting production');
       }
     },
-    submitShippingInfo() {
-      alert(`Shipping to ${this.shippingInfo.address} on ${this.shippingInfo.date}`);
-      this.shippingInfo.address = '';
-      this.shippingInfo.date = '';
-    }
+  approveOrder() {
+    // Empty function
+  },
+  rejectOrder() {
+    // Empty function
+  },
+  fetchOrders() {
+    // Since we're using Vuex, orders are reactive and will update automatically
+  },
   },
   async mounted() {
     this.web3 = new Web3(new Web3.providers.HttpProvider('http://127.0.0.1:7545'));
