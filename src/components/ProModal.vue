@@ -64,6 +64,7 @@ export default {
       sessionCheck: false,
       isDistributor: false,
       isSeller: false,
+      isCustomer: false
     };
   },
   computed: {
@@ -109,6 +110,7 @@ export default {
               price: this.CoffeeOptions.price,
               bType: this.selectedOption.type,
               amount: this.amount,
+              origin: this.CoffeeOptions.origin,
               txInfo: requiredTxInfo, // Include the required TxInfo
             };
 
@@ -188,6 +190,7 @@ export default {
         this.sessionCheck = true;
         this.isDistributor = this.logedUser.distributor;
         this.isSeller = this.logedUser.seller;
+        this.isCustomer = this.logedUser.customer;
         this.userID = this.logedUser.id;
       }
     },
@@ -201,7 +204,7 @@ export default {
       );
 
       if (product) {
-        const quantity = product.quantity;
+        const quantity = product.quantity; // 100g 단위로 변환
         return quantity;
       } else {
         console.log('Product not found.');

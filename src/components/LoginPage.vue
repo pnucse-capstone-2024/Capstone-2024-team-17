@@ -49,7 +49,7 @@ export default {
         for(this.eachUser of this.userList){
           if(this.uname == this.eachUser[1].username && this.pword == this.eachUser[1].password){
             // console.log(this.eachUser[1])
-            let logedUser = new userClass(this.eachUser[1].id, this.eachUser[1].first_name, this.eachUser[1].last_name, this.eachUser[1].username, this.eachUser[1].email,this.eachUser[1].membership, this.eachUser[1].seller, this.eachUser[1].distributor, this.eachUser[1].manager)
+            let logedUser = new userClass(this.eachUser[1].id, this.eachUser[1].first_name, this.eachUser[1].last_name, this.eachUser[1].username, this.eachUser[1].email,this.eachUser[1].membership, this.eachUser[1].seller, this.eachUser[1].distributor, this.eachUser[1].manager, this.eachUser[1].customer)
             logedUser.setSession();
             if(logedUser.membership){
               let logeduser = logedUser.toObject();
@@ -58,10 +58,19 @@ export default {
             }
             this.$emit("userData", true)
             this.$emit("userData2", logedUser)
-            this.$router.push({ name: 'home-page' })
-                .then(() => {
-                    window.location.reload();
-                });
+
+            if (logedUser.seller || logedUser.distributor) {
+              this.$router.push({ name: 'products-page' })
+                  .then(() => {
+                      window.location.reload();
+                  });
+            }
+            else {
+              this.$router.push({ name: 'home-page' })
+                  .then(() => {
+                      window.location.reload();
+                  });
+            }
 
             break; 
 

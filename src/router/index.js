@@ -4,7 +4,6 @@ import HomePage from '../components/HomePage.vue'
 import ProductsPage from '../components/ProductsPage.vue'
 import RecipePage from '../components/RecipePage.vue'
 import ShoppingCart from '../components/CartPage.vue'
-import MemberShip from '../components/MembershipPage.vue'
 import PagenotFound from '../components/PagenotFound.vue'
 import ShippingInfoCompo from '../components/ShippingInfoCompo.vue'
 import DistributorDashboard from '../components/DistributorDashboard.vue'
@@ -38,11 +37,6 @@ const routes = [
         path: '/shoppingcart',
         name: 'shopping-cart', 
         component: ShoppingCart 
-    },
-    {
-        path: '/membership',
-        name: 'member-ship', 
-        component: MemberShip 
     },
     {
         path: '/shippinginfo',
