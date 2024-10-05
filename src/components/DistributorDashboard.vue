@@ -38,30 +38,38 @@
 
         <!-- 배송 정보 입력 화면 -->
         <div v-if="selectedOption === 'Order Info'">
-          <h3>Order Information</h3>
-          <div v-if="orders.length > 0">
-            <ul>
-              <li v-for="(order, index) in orders" :key="index">
-                User ID: {{ order.userId }} |
-                Ship Address: {{ order.shipAddr }} |
-                Ship Tel: {{ order.shipTel }}
+        <h3>Order Information</h3>
+        <div v-if="orders.length > 0">
+          <ul>
+            <li v-for="(order, index) in orders" :key="index">
+              Order ID: {{ order.orderId }} |
+              Coffee: {{ order.coffeeName }} -
+              Type: {{ order.beanType }} -
+              Quantity: {{ order.quantity }} -
+              Price: {{ formatPrice(order.price) }} ETH -
+              Buyer: {{ order.buyer }} -
+              Status: {{ getStatusText(order.status) }}
+              <!-- Display txInfo -->
+              <!-- <div>
+                <h4>Production Details:</h4>
                 <ul>
-                  <li v-for="(item, idx) in order.items" :key="idx">
-                    Coffee: {{ item.coffeeName }} -
-                    Type: {{ item.bType }} -
-                    Amount: {{ item.amount }}
+                  <li v-for="(txInfo, txIndex) in order.txInfos" :key="txIndex">
+                    TxHash: {{ txInfo.txHash }} |
+                    Quantity: {{ txInfo.quantity }} |
+                    Timestamp: {{ formatTimestamp(txInfo.timestamp) }}
                   </li>
                 </ul>
-                <button class="check-btn" @click="approveOrder(order)">✅</button>
-                <button class="delete-btn" @click="rejectOrder(order)">❌</button>
-              </li>
-            </ul>
-          </div>
-          <div v-else>
-            <p>No order data available.</p>
-          </div>
-          <button class="btn" @click="fetchOrders">Refresh Data</button>
+              </div> -->
+              <button class="check-btn" @click="handleApproveOrder(order.orderId)">✅</button>
+              <button class="delete-btn" @click="handleRejectOrder(order.orderId)">❌</button>
+            </li>
+          </ul>
         </div>
+        <div v-else>
+          <p>No pending orders.</p>
+        </div>
+        <button class="btn" @click="fetchOrders">Refresh Data</button>
+      </div>
       </div>
     </div>
   </div>
@@ -71,7 +79,7 @@
 import Web3 from 'web3';
 import CoffeeProductionContract from '../abi/CoffeeProduction.json';
 import StoredRecInfoContract from '../abi/StoredRecInfo.json'; // Import StoredRecInfo ABI
-import { mapGetters } from 'vuex';
+import OrderContract from '../abi/OrderContract.json';
 
 export default {
   data() {
@@ -85,38 +93,22 @@ export default {
       accounts: [],
       contract: null,
       productions: [],
-      ProductionContractAddress: '0xA93Ce7a8de36b4BcDb0D44fC6Da7a1B864F04d90', // Update with your contract address
+      ProductionContractAddress: '0x2806B49E0b477a3A26A735B3AC8d78c349F4292F', // Update with your contract address
       productionIdToTxHash: {},
       StoredRecInfoContract: null,
-      StoredRecInfoContractAddress: '0x918251dC459A9B83049da003c267b117CFB745F4', // Update with your contract address
-      logedUser: JSON.parse(sessionStorage.getItem('logeduser'))
+      StoredRecInfoContractAddress: '0x062DF085C934c6488F8Cd532cCcaA9f56FbCdD21', // Update with your contract address
+      logedUser: JSON.parse(sessionStorage.getItem('logeduser')),
+      orderContract: null,
+      orderContractAddress: '0xf53210AdCABA9346E6B10752558E0F2Bc05D6a1a', // Replace with your deployed contract address
+      orders: [],
     };
   },
-  computed: {
-    ...mapGetters(['getOrderInfo']),
-    orders() {
-      // Flatten the orders from all users into a single array
-      const allOrders = [];
-      const orderInfo = this.$store.state.orderInfo;
-      for (const userId in orderInfo) {
-          const userOrders = orderInfo[userId];
-          userOrders.forEach(order => {
-            allOrders.push({
-              userId: userId,
-              shipAddr: order.shipAddr,
-              shipTel: order.shipTel,
-              items: order.items,
-            });
-          });
-      }
-      return allOrders;
-    },
-    coffeeProductions() {
-        return this.$store.getters.getCoffeeProductions; // Vuex에서 데이터 조회
-      }
-  },
-
   methods: {
+    formatTimestamp(unixTimestamp) {
+      const timestamp = Number(unixTimestamp);
+      const date = new Date(timestamp * 1000);
+      return date.toLocaleString();
+    },
     async handleApproveClick(product) {
       try {
         // Approve the production
@@ -277,15 +269,79 @@ export default {
         alert('Error rejecting production');
       }
     },
-  approveOrder() {
-    // Empty function
-  },
-  rejectOrder() {
-    // Empty function
-  },
-  fetchOrders() {
-    // Since we're using Vuex, orders are reactive and will update automatically
-  },
+    async fetchOrders() {
+      try {
+        const count = await this.orderContract.methods.getOrderCount().call();
+        const orders = [];
+
+        for (let i = 0; i < count; i++) {
+          const orderData = await this.orderContract.methods.getOrder(i).call();
+          const statusNum = Number(orderData[6]); // OrderStatus is at index 6
+
+          if (statusNum === 0) { // Pending orders
+            const txHashes = orderData[7];
+            const txQuantities = orderData[8];
+            const txTimestamps = orderData[9];
+
+            const txInfos = [];
+            for (let j = 0; j < txHashes.length; j++) {
+              txInfos.push({
+                txHash: txHashes[j],
+                quantity: Number(txQuantities[j]), // Convert BigInt to Number
+                timestamp: Number(txTimestamps[j]), // Convert BigInt to Number
+              });
+            }
+
+            const order = {
+              orderId: orderData[0],
+              coffeeName: orderData[1],
+              beanType: orderData[2],
+              quantity: Number(orderData[3]), // Convert BigInt to Number
+              price: orderData[4],
+              buyer: orderData[5],
+              status: statusNum,
+              txInfos: txInfos,
+            };
+            orders.push(order);
+          }
+        }
+
+        this.orders = orders;
+      } catch (error) {
+        console.error('Error fetching orders:', error);
+        alert('Error fetching orders');
+      }
+    },
+
+     // Added missing methods
+     formatPrice(priceInWei) {
+      const priceInEth = this.web3.utils.fromWei(priceInWei.toString(), 'ether');
+      return parseFloat(priceInEth).toFixed(4);
+    },
+    async handleApproveOrder(orderId) {
+      try {
+        await this.orderContract.methods.approveOrder(orderId).send({ from: this.accounts[this.logedUser.id] });
+        alert('Order approved');
+
+        // Remove the approved order from the list
+        this.orders = this.orders.filter(order => order.orderId !== orderId);
+      } catch (error) {
+        console.error('Error approving order:', error);
+        alert('Error approving order');
+      }
+    },
+    async handleRejectOrder(orderId) {
+      try {
+        await this.orderContract.methods.rejectOrder(orderId).send({ from: this.accounts[this.logedUser.id] });
+        alert('Order rejected');
+
+        // Remove the rejected order from the list
+        this.orders = this.orders.filter(order => order.orderId !== orderId);
+      } catch (error) {
+        console.error('Error rejecting order:', error);
+        alert('Error rejecting order');
+      }
+    },
   },
   async mounted() {
     this.web3 = new Web3(new Web3.providers.HttpProvider('http://127.0.0.1:7545'));
@@ -293,9 +349,12 @@ export default {
     this.contract = new this.web3.eth.Contract(CoffeeProductionContract.abi, this.ProductionContractAddress);
     this.StoredRecInfoContract = new this.web3.eth.Contract(StoredRecInfoContract.abi, this.StoredRecInfoContractAddress);
     await this.fetchProductions();
+    this.orderContract = new this.web3.eth.Contract(OrderContract.abi, this.orderContractAddress);
+    await this.fetchOrders(); // Fetch orders when component is mounted
   }
 };
 </script>
+
 
 <style scoped>
 /* Existing styles */

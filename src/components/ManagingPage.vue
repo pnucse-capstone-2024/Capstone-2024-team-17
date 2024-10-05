@@ -115,10 +115,10 @@
         accounts: [],
         contract: null,
         productions: [],
-        ProductionContractAddress: '0xA93Ce7a8de36b4BcDb0D44fC6Da7a1B864F04d90', // Update with your contract address
+        ProductionContractAddress: '0x2806B49E0b477a3A26A735B3AC8d78c349F4292F', // Update with your contract address
         productionIdToTxHash: {},
         StoredRecInfoContract: null,
-        StoredRecInfoContractAddress: '0x918251dC459A9B83049da003c267b117CFB745F4', // Update with your contract address
+        StoredRecInfoContractAddress: '0x062DF085C934c6488F8Cd532cCcaA9f56FbCdD21', // Update with your contract address
         logedUser: JSON.parse(sessionStorage.getItem('logeduser')),
         coffeeData: coffeeData,
         options: options,

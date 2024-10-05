@@ -66,9 +66,9 @@ export default {
       coffeeId: 0,
       web3: null,
       transactionInfo: null,
-      ProductionContractAddress: '0xA93Ce7a8de36b4BcDb0D44fC6Da7a1B864F04d90', // Update with new address
+      ProductionContractAddress: '0x2806B49E0b477a3A26A735B3AC8d78c349F4292F', // Update with new address
       StoredProInfoContract: null,
-      StoredProInfoContractAddress: '0xE5CCE88FC2d8429323ADb9d046AA47920e1fF783',
+      StoredProInfoContractAddress: '0xdb624a49f681D70c1e42F63dd1283E1871cAa11e',
       coffeePriceList: [], // To store coffee data
       optionsPrices: [] // To store type fees
     };

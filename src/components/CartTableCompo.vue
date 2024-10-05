@@ -30,17 +30,20 @@
                 <ul v-for="(coffee,idx) in userShoppingCart" :key="idx">
                     <li>
                         <p><span style="margin-left: 10px;">{{coffee.coffeeName}}</span> x {{coffee.amount}}(100g, {{coffee.bType}})</p>
-                        <p><span style="margin-left: 10px;">- Origin: {{coffee.origin}}</span></p>
+                        <p>
+                            <span style="margin-left: 10px;">- Origin: {{ getOrigin(coffee.coffeeName) }}</span>
+                        </p>
+                        <p><span style="margin-left: 10px;">- Production day:</span></p>
                         <!-- Display P-days and quantities -->
                         <ul>
                             <li v-for="(tx, txIdx) in coffee.txInfo" :key="txIdx">
-                            Production day {{ txIdx + 1 }}: {{ formatTimestamp(tx.timestamp) }}, {{ tx.quantity }} units
+                                {{ txIdx + 1 }}. {{ formatTimestamp(tx.timestamp) }}, {{ tx.quantity }} units
                             </li>
                         </ul>
                     </li>
                 </ul>
                 <section>
-                    <h3 style="margin-top: 40px;">Total: {{this.subTotal.toFixed(2)}}<small>({{this.totalPrice.toFixed(2)}}(price) - {{this.discountPrice.toFixed(2)}}(discount) + {{this.commision.toFixed(2)}}(commision))</small></h3>
+                    <h3 style="margin-top: 40px;">Total: {{this.subTotal.toFixed(2)}}<small>({{this.totalPrice.toFixed(2)}}(price) - {{this.discountPrice.toFixed(2)}}(discount))</small></h3>
                     <p style="margin-top: 60px;">Available ETH: {{ userBalance }}</p>
                 </section>
                 <h2></h2>
@@ -66,6 +69,8 @@
 import Web3 from 'web3';
 import CoffeeContract from '../abi/PaymentContract.json';
 import { mapActions, mapGetters } from 'vuex';
+import coffeeData from '../../public/data/coffee.json'; // Import coffee.json
+import OrderContract from '../abi/OrderContract.json'; // Updated ABI
 
 export default {
     name: 'CartTableCompo',
@@ -86,7 +91,9 @@ export default {
             web3: null,
             contract: null,
             accounts: [],
-            contractAddress: '0xa6A96Be3f5CbBCa1Edf1533c8A3e3b61A2b1a2eD' 
+            contractAddress: '0xa6A96Be3f5CbBCa1Edf1533c8A3e3b61A2b1a2eD',
+            orderContract: null,
+            orderContractAddress: '0xf53210AdCABA9346E6B10752558E0F2Bc05D6a1a',
         }
     },
 
@@ -102,10 +109,9 @@ export default {
         ...mapActions(['updateConfirmedProductionQuantity', 'deleteCoffeeShoppingCart', 'clearCoffeeShoppingCart', 'addCoffeeOrderInfo']),
         
         
-        ExtractTheFirstWord(coffeeName){
-            const words = coffeeName.trim().split(" "); // 공백을 기준으로 분리
-            const firstWord = words[0];  // 첫 번째 단어 추출
-            return firstWord;
+        getOrigin(coffeeName) {
+            const coffeeItem = coffeeData.find(item => item.coffeeName === coffeeName);
+            return coffeeItem ? coffeeItem.origin : 'Unknown';
         },
         calculateOptionFee(feeType) {
             switch (feeType) {
@@ -196,9 +202,9 @@ export default {
                 return;
             }
 
-
             try {
-                for (let coffee of shoppingCart) {
+                // Existing payment processing code
+                 for (let coffee of shoppingCart) {
                     const orderInfo = {
                         shipAddr: this.shipAddr,
                         shipTel: this.shipTel,
@@ -259,40 +265,128 @@ export default {
                         alert(`${coffeeName} (${beanType}) cannot be found`);
                         return;
                     }
-                }
+                    }
 
-                if (!this.loggedUser.manager) {
-                    const commissionWei = this.web3.utils.toWei(this.commision.toString(), 'ether');
-                    await this.web3.eth.sendTransaction({
+                    if (!this.loggedUser.manager) {
+                        const commissionWei = this.web3.utils.toWei(this.commision.toString(), 'ether');
+                        await this.web3.eth.sendTransaction({
+                            from: this.accounts[this.logedUser.id],
+                            to: this.accounts[23],
+                            value: commissionWei,
+                        });
+                    }
+
+                // After successful payment, create orders in the smart contract
+                for (let coffee of shoppingCart) {
+                const coffeeName = coffee.coffeeName;
+                const beanType = coffee.bType;
+                const coffeeIndex = parseInt(coffee.pId);
+                const quantity = Number(coffee.amount);
+                const priceInEth = parseFloat(this.calculateWhole(coffee.price, coffee.bType, coffee.amount));
+                const priceInWei = this.web3.utils.toWei(priceInEth.toString(), 'ether');
+
+                // 스마트 컨트랙트 메서드 호출로 트랜잭션을 발생시킵니다.
+                await this.contract.methods.purchaseCoffee(coffeeIndex, quantity).send({
                         from: this.accounts[this.logedUser.id],
-                        to: this.accounts[23],
-                        value: commissionWei,
+                        to: this.accounts[22],
+                        value:priceInWei,
                     });
+                console.log('Your payment has been made successfully.');
+
+                // Prepare txInfo data
+                const txInfos = coffee.txInfo || [];
+                const txHashes = txInfos.map(tx => tx.txHash);
+                const txQuantities = txInfos.map(tx => Number(tx.quantity));
+                const txTimestamps = txInfos.map(tx => Number(tx.timestamp));
+
+                // Ensure arrays are of the same length
+                if (txHashes.length !== txQuantities.length || txHashes.length !== txTimestamps.length) {
+                    console.error('TxInfo arrays must have the same length');
+                    continue;
                 }
-                
 
+                // Call createOrder on the contract
+                const estimatedGas = await this.orderContract.methods
+                    .createOrder(coffeeName, beanType, quantity, priceInWei, txHashes, txQuantities, txTimestamps)
+                    .estimateGas({ from: this.accounts[userId] });
 
-                // 모든 구매가 완료된 후 장바구니에서 아이템을 제거합니다.
+                await this.orderContract.methods
+                    .createOrder(coffeeName, beanType, quantity, priceInWei, txHashes, txQuantities, txTimestamps)
+                    .send({ from: this.accounts[userId], gas: estimatedGas });
+                }
+
+                // Clear shopping cart after successful order creation
                 this.clearCoffeeShoppingCart(userId);
 
-                // 주문 정보 초기화
+                // Reset form fields
                 this.shipAddr = '';
                 this.shipTel = '';
                 this.chBox = false;
 
                 sessionStorage.setItem('logeduser', JSON.stringify(this.logedUser));
 
-                // 결제 완료 후 알림 및 페이지 이동
-                alert('Payment has been completed. You will be redirected to the homepage.');
+                alert('Order placed successfully. You will be redirected to the homepage.');
                 this.$router.push({ name: 'home-page' });
-
-                this.show = true;
-            } 
-            catch (error) {
+            } catch (error) {
                 console.error('Transaction failed:', error);
                 alert(`There was an error processing your transaction: ${error.message}`);
             }
-        },
+            },
+            getAvailableTxInfo(coffeeName, beanType, amountNeeded) {
+                const product = this.$store.getters.getConfirmedProductions.find(
+                (item) => item.coffeeName === coffeeName && item.beanType === beanType
+                );
+
+                if (!product) {
+                alert(`${coffeeName} (${beanType}) is not available`);
+                return [];
+                }
+
+                let remainingAmount = amountNeeded;
+                const selectedTxInfos = [];
+
+                for (const txInfo of product.TxInfo) {
+                if (remainingAmount <= 0) break;
+                const availableQuantity = Number(txInfo.quantity);
+                const usedQuantity = Math.min(availableQuantity, remainingAmount);
+
+                selectedTxInfos.push({
+                    txHash: txInfo.txHash,
+                    quantity: usedQuantity,
+                    timestamp: txInfo.timestamp,
+                });
+
+                remainingAmount -= usedQuantity;
+                }
+
+                if (remainingAmount > 0) {
+                alert(`Not enough stock for ${coffeeName} (${beanType})`);
+                return [];
+                }
+
+                return selectedTxInfos;
+            },
+
+            addToCart(coffee) {
+                const userId = this.logedUser.id;
+                const amountNeeded = Number(coffee.amount);
+                const txInfos = this.getAvailableTxInfo(coffee.coffeeName, coffee.bType, amountNeeded);
+
+                if (txInfos.length === 0) {
+                return; // Not enough stock
+                }
+
+                const product = {
+                pId: coffee.pId,
+                coffeeName: coffee.coffeeName,
+                bType: coffee.bType,
+                price: coffee.price,
+                amount: coffee.amount,
+                txInfo: txInfos,
+                };
+
+                this.$store.dispatch('addCoffeeShoppingCart', { userId, production: product });
+            },
     },
 
     watch: {
@@ -304,12 +398,8 @@ export default {
                     this.totalPrice += parseFloat(this.calculateWhole(coffee.price, coffee.bType, coffee.amount));
                     this.discountPrice += parseFloat(this.calculateDiscount(coffee.price, coffee.bType, coffee.amount));
                 });
-                if (this.loggedUser.manager) {
-                    this.commision = 0;
-                } else {
-                    this.commision = (this.totalPrice - this.discountPrice) * 0.30;
-                }
-                this.subTotal = this.totalPrice - this.discountPrice + this.commision;
+                
+                this.subTotal = this.totalPrice - this.discountPrice;
             },
             deep: true,
             immediate: true,
@@ -318,6 +408,7 @@ export default {
     async mounted() {
         this.web3 = new Web3(new Web3.providers.HttpProvider('http://127.0.0.1:7545'));
         this.contract = new this.web3.eth.Contract(CoffeeContract.abi, this.contractAddress);
+        this.orderContract = new this.web3.eth.Contract(OrderContract.abi, this.orderContractAddress); // Initialize OrderContract
 
         this.logedUser = JSON.parse(sessionStorage.getItem('logeduser'));
 
@@ -330,6 +421,7 @@ export default {
     }
 }
 </script>
+
 <style scoped>
 /* Shopping Cart */
 div{
