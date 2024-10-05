@@ -31,17 +31,17 @@
               </p>
             </div>
 
-            <!-- 저장된 TxHash 목록 표시 -->
-            <!-- <div>
-              <h3>Stored My Transaction Hashes</h3>
-              <button @click="getStoredTxHashes">Refresh Stored TxHashes</button>
-              <ul>
-                <li v-for="(txHash, index) in storedTxHashes" :key="index">{{ formatTimestamp(timestamps[txHash].timestamp) }},
-                  <span :style="{ color: getStatusText(timestamps[txHash].status).color }">
-                    {{ getStatusText(timestamps[txHash].status).text }}
-                  </span>, {{ txHash }}</li>
-              </ul>
-            </div> -->
+          <!-- 저장된 TxHash 목록 표시 -->
+           <div>
+            <h3>Stored My Transaction Hashes</h3>
+            <button @click="getStoredTxHashes">Refresh Stored TxHashes</button>
+            <ul>
+              <li v-for="(txHash, index) in storedTxHashes" :key="index">{{ formatTimestamp(timestamps[txHash].timestamp) }},
+                <span :style="{ color: getStatusText(timestamps[txHash].status).color }">
+                  {{ getStatusText(timestamps[txHash].status).text }}
+                </span>, {{ txHash }}</li>
+            </ul>
+          </div>
 
           </div>
         </div>
@@ -63,7 +63,7 @@ export default {
       contract: null,
       web3: null,
       ProductionContractAddress: '0x2806B49E0b477a3A26A735B3AC8d78c349F4292F',
-      StoredProInfoContractAddress: '0xdb624a49f681D70c1e42F63dd1283E1871cAa11e',
+      StoredProInfoContractAddress: '0x34b8FF48b80B62b4FfA6f79c3C0f68a236a95cf4',
       StoredProInfoContract: null,
       storedTxHashes: [],
       accounts: [],
@@ -73,40 +73,39 @@ export default {
   },
   methods: {
     async fetchProductionStatus(txHash) {
-  try {
-    const receipt = await this.web3.eth.getTransactionReceipt(txHash);
-    if (!receipt) {
-      console.error('Transaction receipt not found');
-      return 'Unknown';
-    }
+      try {
+        const receipt = await this.web3.eth.getTransactionReceipt(txHash);
+        if (!receipt) {
+          console.error('Transaction receipt not found');
+          return 'Unknown';
+        }
 
-    const productionRecordedEventAbi = CoffeeProductionContract.abi.find(
-      (item) => item.name === 'ProductionRecorded' && item.type === 'event'
-    );
+        const productionRecordedEventAbi = CoffeeProductionContract.abi.find(
+          (item) => item.name === 'ProductionRecorded' && item.type === 'event'
+        );
 
-    const eventSignature = this.web3.eth.abi.encodeEventSignature(productionRecordedEventAbi);
-    const eventLog = receipt.logs.find((log) => log.topics[0] === eventSignature);
-    if (!eventLog) {
-      console.error('ProductionRecorded event not found in transaction logs');
-      return 'Unknown';
-    }
+        const eventSignature = this.web3.eth.abi.encodeEventSignature(productionRecordedEventAbi);
+        const eventLog = receipt.logs.find((log) => log.topics[0] === eventSignature);
+        if (!eventLog) {
+          console.error('ProductionRecorded event not found in transaction logs');
+          return 'Unknown';
+        }
 
-    const decodedEvent = this.web3.eth.abi.decodeLog(
-      productionRecordedEventAbi.inputs,
-      eventLog.data,
-      eventLog.topics.slice(1)
-    );
+        const decodedEvent = this.web3.eth.abi.decodeLog(
+          productionRecordedEventAbi.inputs,
+          eventLog.data,
+          eventLog.topics.slice(1)
+        );
 
-    const productionId = decodedEvent.productionId;
-    const production = await this.contract.methods.getProduction(productionId).call();
-    
-    return production.status;
-  } catch (error) {
-    console.error('Error fetching production status:', error);
-    return 'Unknown';
-  }
-}
-,
+        const productionId = decodedEvent.productionId;
+        const production = await this.contract.methods.getProduction(productionId).call();
+        
+        return production.status;
+      } catch (error) {
+        console.error('Error fetching production status:', error);
+        return 'Unknown';
+      }
+    },
     formatTimestamp(unixTimestamp) {
       const date = new Date(unixTimestamp * 1000);
       return date.toLocaleString('en-US');

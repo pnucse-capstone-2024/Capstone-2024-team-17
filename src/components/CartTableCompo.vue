@@ -71,6 +71,7 @@ import CoffeeContract from '../abi/PaymentContract.json';
 import { mapActions, mapGetters } from 'vuex';
 import coffeeData from '../../public/data/coffee.json'; // Import coffee.json
 import OrderContract from '../abi/OrderContract.json'; // Updated ABI
+import StoredProInfoContract from '../abi/StoredProInfo.json';
 
 export default {
     name: 'CartTableCompo',
@@ -93,7 +94,9 @@ export default {
             accounts: [],
             contractAddress: '0xa6A96Be3f5CbBCa1Edf1533c8A3e3b61A2b1a2eD',
             orderContract: null,
-            orderContractAddress: '0xf53210AdCABA9346E6B10752558E0F2Bc05D6a1a',
+            orderContractAddress: '0xD48f4716fa30a98A5528075A9bB6AFc34c8A8c4C',
+            StoredProInfoContract: null,
+            StoredProInfoContractAddress: '0x34b8FF48b80B62b4FfA6f79c3C0f68a236a95cf4',
         }
     },
 
@@ -203,122 +206,69 @@ export default {
             }
 
             try {
-                // Existing payment processing code
-                 for (let coffee of shoppingCart) {
-                    const orderInfo = {
-                        shipAddr: this.shipAddr,
-                        shipTel: this.shipTel,
-                        items: shoppingCart.map(coffee => ({
-                            coffeeName: coffee.coffeeName,
-                            bType: coffee.bType,
-                            amount: coffee.amount,
-                        })),
-                        };
+                let transactionHashList = []; // 주문별로 txHash를 저장하기 위한 리스트
 
-                    this.addCoffeeOrderInfo({ userId, production: orderInfo });
-
-                    const quantity = Number(coffee.amount);
+                // 기존 결제 처리 코드
+                for (let coffee of shoppingCart) {
                     const coffeeName = coffee.coffeeName;
                     const beanType = coffee.bType;
-                    const orderedAmount = quantity;
+                    const coffeeIndex = parseInt(coffee.pId);
+                    const quantity = Number(coffee.amount);
+                    const priceInEth = parseFloat(this.calculateWhole(coffee.price, coffee.bType, coffee.amount));
+                    const priceInWei = this.web3.utils.toWei(priceInEth.toString(), 'ether');
 
-                    const product = this.$store.getters.getConfirmedProductions.find(
-                        (item) => item.coffeeName === coffeeName && item.beanType === beanType
-                    );
-
-                    if (product) {
-                        // Update the TxInfo in FIFO order
-                        let remainingAmount = orderedAmount;
-                        const updatedTxInfo = [];
-                        for (const txInfo of product.TxInfo) {
-                        if (remainingAmount <= 0) {
-                            updatedTxInfo.push(txInfo);
-                            continue;
-                        }
-                        const availableQuantity = Number(txInfo.quantity);
-                        const usedQuantity = Math.min(availableQuantity, remainingAmount);
-                        const newQuantity = availableQuantity - usedQuantity;
-
-                        if (newQuantity > 0) {
-                            updatedTxInfo.push({
-                            txHash: txInfo.txHash,
-                            quantity: newQuantity,
-                            timestamp: txInfo.timestamp,
-                            });
-                        }
-                        remainingAmount -= usedQuantity;
-                        }
-                        if (remainingAmount > 0) {
-                        alert(`Insufficient stock for ${coffeeName} (${beanType})`);
-                        return;
-                        }
-
-                        // Update the product's TxInfo and quantity in the Vuex store
-                        const newTotalQuantity = updatedTxInfo.reduce((sum, tx) => sum + Number(tx.quantity), 0);
-                        this.$store.dispatch('updateConfirmedProductionAfterOrder', {
-                        coffeeName,
-                        beanType,
-                        newQuantity: newTotalQuantity,
-                        newTxInfo: updatedTxInfo,
-                        });
-                    } else {
-                        alert(`${coffeeName} (${beanType}) cannot be found`);
-                        return;
-                    }
-                    }
-
-                    if (!this.loggedUser.manager) {
-                        const commissionWei = this.web3.utils.toWei(this.commision.toString(), 'ether');
-                        await this.web3.eth.sendTransaction({
-                            from: this.accounts[this.logedUser.id],
-                            to: this.accounts[23],
-                            value: commissionWei,
-                        });
-                    }
-
-                // After successful payment, create orders in the smart contract
-                for (let coffee of shoppingCart) {
-                const coffeeName = coffee.coffeeName;
-                const beanType = coffee.bType;
-                const coffeeIndex = parseInt(coffee.pId);
-                const quantity = Number(coffee.amount);
-                const priceInEth = parseFloat(this.calculateWhole(coffee.price, coffee.bType, coffee.amount));
-                const priceInWei = this.web3.utils.toWei(priceInEth.toString(), 'ether');
-
-                // 스마트 컨트랙트 메서드 호출로 트랜잭션을 발생시킵니다.
-                await this.contract.methods.purchaseCoffee(coffeeIndex, quantity).send({
+                    // 트랜잭션 발생
+                    const tx = await this.contract.methods.purchaseCoffee(coffeeIndex, quantity).send({
                         from: this.accounts[this.logedUser.id],
                         to: this.accounts[22],
-                        value:priceInWei,
+                        value: priceInWei,
                     });
-                console.log('Your payment has been made successfully.');
 
-                // Prepare txInfo data
-                const txInfos = coffee.txInfo || [];
-                const txHashes = txInfos.map(tx => tx.txHash);
-                const txQuantities = txInfos.map(tx => Number(tx.quantity));
-                const txTimestamps = txInfos.map(tx => Number(tx.timestamp));
+                    // 트랜잭션이 성공하면 txHash 저장
+                    const transactionHash = tx.transactionHash;
+                    transactionHashList.push(transactionHash); // txHash 리스트에 추가
+                    console.log('Your payment has been made successfully. Transaction Hash:', transactionHash);
 
-                // Ensure arrays are of the same length
-                if (txHashes.length !== txQuantities.length || txHashes.length !== txTimestamps.length) {
-                    console.error('TxInfo arrays must have the same length');
-                    continue;
+                    // TxInfo 데이터 준비
+                    const txInfos = coffee.txInfo || [];
+                    const txHashes = txInfos.map(tx => tx.txHash);
+                    const txQuantities = txInfos.map(tx => Number(tx.quantity));
+                    const txTimestamps = txInfos.map(tx => Number(tx.timestamp));
+
+                    // TxInfo 배열이 일치하는지 확인
+                    if (txHashes.length !== txQuantities.length || txHashes.length !== txTimestamps.length) {
+                        console.error('TxInfo arrays must have the same length');
+                        continue;
+                    }
+
+                    // 스마트 컨트랙트의 createOrder 호출
+                    const estimatedGas = await this.orderContract.methods
+                        .createOrder(coffeeName, beanType, quantity, priceInWei, txHashes, txQuantities, txTimestamps)
+                        .estimateGas({ from: this.accounts[userId] });
+
+                    await this.orderContract.methods
+                        .createOrder(coffeeName, beanType, quantity, priceInWei, txHashes, txQuantities, txTimestamps)
+                        .send({ from: this.accounts[userId], gas: estimatedGas });
                 }
 
-                // Call createOrder on the contract
-                const estimatedGas = await this.orderContract.methods
-                    .createOrder(coffeeName, beanType, quantity, priceInWei, txHashes, txQuantities, txTimestamps)
-                    .estimateGas({ from: this.accounts[userId] });
+                // 트랜잭션 저장
+                for (const txHash of transactionHashList) {
+                    // StoredProInfoContract에 트랜잭션 해시 저장
+                    const estimatedGasForAddString = await this.StoredProInfoContract.methods
+                        .addString(txHash)
+                        .estimateGas({ from: this.accounts[userId] });
 
-                await this.orderContract.methods
-                    .createOrder(coffeeName, beanType, quantity, priceInWei, txHashes, txQuantities, txTimestamps)
-                    .send({ from: this.accounts[userId], gas: estimatedGas });
+                    await this.StoredProInfoContract.methods
+                        .addString(txHash)
+                        .send({ from: this.accounts[userId], gas: estimatedGasForAddString });
+
+                    console.log('Transaction Hash stored in StoredProInfoContract:', txHash);
                 }
 
-                // Clear shopping cart after successful order creation
+                // 장바구니 비우기
                 this.clearCoffeeShoppingCart(userId);
 
-                // Reset form fields
+                // 폼 필드 리셋
                 this.shipAddr = '';
                 this.shipTel = '';
                 this.chBox = false;
@@ -326,12 +276,16 @@ export default {
                 sessionStorage.setItem('logeduser', JSON.stringify(this.logedUser));
 
                 alert('Order placed successfully. You will be redirected to the homepage.');
+
+                // 주문 후 관리자 설정 (setManager)
+                await this.setManager();
+
                 this.$router.push({ name: 'home-page' });
             } catch (error) {
                 console.error('Transaction failed:', error);
                 alert(`There was an error processing your transaction: ${error.message}`);
             }
-            },
+        },
             getAvailableTxInfo(coffeeName, beanType, amountNeeded) {
                 const product = this.$store.getters.getConfirmedProductions.find(
                 (item) => item.coffeeName === coffeeName && item.beanType === beanType
@@ -387,6 +341,26 @@ export default {
 
                 this.$store.dispatch('addCoffeeShoppingCart', { userId, production: product });
             },
+            async setManager() {
+                try {
+                    // Your manager's Ethereum account address (change this to your actual manager's address)
+                    const managerAddress = this.accounts[22]; 
+                    
+                    // Set the manager in the smart contract
+                    const estimatedGas = await this.orderContract.methods
+                        .setManager(managerAddress)
+                        .estimateGas({ from: this.accounts[this.logedUser.id] });
+                        
+                    await this.orderContract.methods
+                        .setManager(managerAddress)
+                        .send({ from: this.accounts[this.logedUser.id], gas: estimatedGas });
+                        
+                    alert('Manager has been set successfully.');
+                } catch (error) {
+                    console.error('Error setting manager:', error);
+                    alert('Error setting manager.');
+                }
+            },
     },
 
     watch: {
@@ -409,6 +383,7 @@ export default {
         this.web3 = new Web3(new Web3.providers.HttpProvider('http://127.0.0.1:7545'));
         this.contract = new this.web3.eth.Contract(CoffeeContract.abi, this.contractAddress);
         this.orderContract = new this.web3.eth.Contract(OrderContract.abi, this.orderContractAddress); // Initialize OrderContract
+        this.StoredProInfoContract = new this.web3.eth.Contract(StoredProInfoContract.abi, this.StoredProInfoContractAddress);
 
         this.logedUser = JSON.parse(sessionStorage.getItem('logeduser'));
 

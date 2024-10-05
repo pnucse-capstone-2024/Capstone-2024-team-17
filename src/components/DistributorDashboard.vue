@@ -80,6 +80,7 @@ import Web3 from 'web3';
 import CoffeeProductionContract from '../abi/CoffeeProduction.json';
 import StoredRecInfoContract from '../abi/StoredRecInfo.json'; // Import StoredRecInfo ABI
 import OrderContract from '../abi/OrderContract.json';
+import StoredDelInfoContract from '../abi/StoredDelInfo.json';
 
 export default {
   data() {
@@ -99,8 +100,10 @@ export default {
       StoredRecInfoContractAddress: '0x062DF085C934c6488F8Cd532cCcaA9f56FbCdD21', // Update with your contract address
       logedUser: JSON.parse(sessionStorage.getItem('logeduser')),
       orderContract: null,
-      orderContractAddress: '0xf53210AdCABA9346E6B10752558E0F2Bc05D6a1a', // Replace with your deployed contract address
+      orderContractAddress: '0xD48f4716fa30a98A5528075A9bB6AFc34c8A8c4C', // Replace with your deployed contract address
       orders: [],
+      StoredDelInfoContract: null,
+      StoredDelInfoContractAddress: '0x75e0fE9e49CAF971c315560D11657D658f7C1788', // Update with your contract address
     };
   },
   methods: {
@@ -180,19 +183,6 @@ export default {
 
       if (typeof status === 'bigint') {
         statusNum = Number(status); // Convert BigInt to Number
-      } else if (typeof status === 'object' && status.toNumber) {
-        statusNum = status.toNumber();
-      } else if (typeof status === 'string') {
-        if (status.startsWith('0x')) {
-          statusNum = parseInt(status, 16);
-        } else {
-          statusNum = parseInt(status, 10);
-        }
-      } else if (typeof status === 'number') {
-        statusNum = status;
-      } else {
-        console.warn('Unknown status format:', status);
-        return 'Unknown';
       }
 
       switch (statusNum) {
@@ -276,6 +266,7 @@ export default {
 
         for (let i = 0; i < count; i++) {
           const orderData = await this.orderContract.methods.getOrder(i).call();
+          const realstatus = orderData[6];
           const statusNum = Number(orderData[6]); // OrderStatus is at index 6
 
           if (statusNum === 0) { // Pending orders
@@ -299,7 +290,7 @@ export default {
               quantity: Number(orderData[3]), // Convert BigInt to Number
               price: orderData[4],
               buyer: orderData[5],
-              status: statusNum,
+              status: realstatus,
               txInfos: txInfos,
             };
             orders.push(order);
@@ -316,12 +307,29 @@ export default {
      // Added missing methods
      formatPrice(priceInWei) {
       const priceInEth = this.web3.utils.fromWei(priceInWei.toString(), 'ether');
-      return parseFloat(priceInEth).toFixed(4);
+      return parseFloat(priceInEth).toFixed(2);
     },
     async handleApproveOrder(orderId) {
       try {
-        await this.orderContract.methods.approveOrder(orderId).send({ from: this.accounts[this.logedUser.id] });
+        // Approve the order in the smart contract and get the transaction receipt
+        const receipt = await this.orderContract.methods
+          .approveOrder(orderId)
+          .send({ from: this.accounts[this.logedUser.id] });
         alert('Order approved');
+
+        // Get the transaction hash from the receipt
+        const txHash = receipt.transactionHash;
+
+        // Store the txHash in StoredDelInfoContract
+        const userId = this.logedUser.id;
+        const estimatedGas = await this.StoredDelInfoContract.methods
+          .addString(txHash)
+          .estimateGas({ from: this.accounts[userId] });
+        await this.StoredDelInfoContract.methods
+          .addString(txHash)
+          .send({ from: this.accounts[userId], gas: estimatedGas });
+
+        alert('Transaction hash stored in StoredDelInfo contract');
 
         // Remove the approved order from the list
         this.orders = this.orders.filter(order => order.orderId !== orderId);
@@ -330,10 +338,27 @@ export default {
         alert('Error approving order');
       }
     },
+
     async handleRejectOrder(orderId) {
       try {
+        // Get the order data from the smart contract
+        const orderData = await this.orderContract.methods.getOrder(orderId).call();
+
+        // Extract buyer's address and price
+        const buyerAddress = orderData[5]; // Assuming buyer address is at index 5
+        const priceInWei = orderData[4];   // Assuming price is at index 4
+
+        // Reject the order in the smart contract
         await this.orderContract.methods.rejectOrder(orderId).send({ from: this.accounts[this.logedUser.id] });
-        alert('Order rejected');
+
+        // Send Ether back to the buyer as a refund
+        await this.web3.eth.sendTransaction({
+          from: this.accounts[this.logedUser.id],
+          to: buyerAddress,
+          value: priceInWei,
+        });
+
+        alert(`Order rejected and refund of ${this.web3.utils.fromWei(priceInWei, 'ether')} ETH sent to buyer.`);
 
         // Remove the rejected order from the list
         this.orders = this.orders.filter(order => order.orderId !== orderId);
@@ -351,6 +376,10 @@ export default {
     await this.fetchProductions();
     this.orderContract = new this.web3.eth.Contract(OrderContract.abi, this.orderContractAddress);
     await this.fetchOrders(); // Fetch orders when component is mounted
+    this.StoredDelInfoContract = new this.web3.eth.Contract(
+    StoredDelInfoContract.abi,
+    this.StoredDelInfoContractAddress
+  );
   }
 };
 </script>
