@@ -43,24 +43,24 @@
             </div>
           </div>
   
-          <!-- Receiving History -->
-    <div v-if="selectedOption === 'ReceivingHistory'">
-      <h3>Receiving history</h3>
-      <div>
-        <table>
-          <thead>
-            <tr>
-              <th>Entry Date</th>
-              <th>P-date</th>
-              <th>Item</th>
-              <th>Type</th>
-              <th>Origin</th>
-              <th>Quantity (kg)</th>
-              <th>Entry Price</th>
-              <th>TxHash</th>
-            </tr>
-          </thead>
-            <tbody>
+      <!-- Receiving History -->
+      <div v-if="selectedOption === 'ReceivingHistory'">
+        <h3>Receiving history</h3>
+        <div v-if="isConnected">
+          <table>
+            <thead>
+              <tr>
+                <th>Entry Date</th>
+                <th>P-date</th>
+                <th>Item</th>
+                <th>Type</th>
+                <th>Origin</th>
+                <th>Quantity (kg)</th>
+                <th>Entry Price</th>
+                <th>TxHash</th>
+              </tr>
+            </thead>
+              <tbody>
                 <tr v-for="(data, index) in storedData" :key="index">
                 <td>{{ formatTimestamp(Number(data.timestamp)) }}</td> <!-- Entry Date from StoredRecInfo -->
                 <td>{{ formatTimestamp(Number(eventData[data.txHash]?.timestamp)) }}</td> <!-- P-date from event data -->
@@ -70,25 +70,28 @@
                 <td>{{ eventData[data.txHash]?.quantity || 'Unknown' }}</td>
                 <td>{{ eventData[data.txHash]?.totalPrice || 'Unknown' }}</td>
                 <td>
-                    <!-- Display truncated txHash -->
-                    <span @click="showFullTxHash(data.txHash)" class="txhash-short"><span class="break-word">{{ truncateTxHash(data.txHash) }}</span></span>
-                    <!-- Full txHash modal -->
-                    <div v-if="showModal && selectedTxHash === data.txHash" class="modal-overlay" @click.self="closeModal">
-                    <div class="modal">
-                        <h4>Transaction Hash</h4>
-                        <p>{{ data.txHash }}</p>
-                        <button @click="closeModal" class="modal-close-btn">Close</button>
-                    </div>
-                    </div>
+                  <!-- Display truncated txHash -->
+                  <span @click="showFullTxHash(data.txHash)" class="txhash-short"><span class="break-word">{{ truncateTxHash(data.txHash) }}</span></span>
+                  <!-- Full txHash modal -->
+                  <div v-if="showModal && selectedTxHash === data.txHash" class="modal-overlay" @click.self="closeModal">
+                  <div class="modal">
+                      <h4>Transaction Hash</h4>
+                      <p><span class="break-word">{{ data.txHash }}</span></p>
+                      <button @click="closeModal" class="modal-close-btn">Close</button>
+                  </div>
+                  </div>
                 </td>
                 </tr>
-            </tbody>
-            </table>
+              </tbody>
+              </table>
+          </div>
+          <div v-else class="network-error">
+            Currently, blockchain networks are not connected.
+          </div>
+          </div>
+    
+          </div>
         </div>
-        </div>
-  
-        </div>
-      </div>
     </div>
   </template>
   
@@ -123,6 +126,7 @@
         eventData: {},
         showModal: false,
         selectedTxHash: null,
+        isConnected: false,
       };
     },
     computed: {
@@ -142,11 +146,14 @@
         const userId = this.logedUser.id;
         try {
           const dataEntries = await this.StoredRecInfoContract.methods.getAllStrings().call({ from: this.accounts[userId] });
-          this.storedData = dataEntries;
-  
+          this.storedData = [];
+
           for (let dataEntry of dataEntries) {
             const txHash = dataEntry.txHash;
             const eventData = await this.fetchEventData(txHash);
+            if (eventData.status !== 'Rejected') {
+              this.storedData.push(dataEntry);
+            }
             this.eventData[txHash] = eventData;
           }
         } catch (error) {
@@ -160,24 +167,24 @@
             alert('Transaction receipt not found');
             return;
           }
-  
+
           const productionRecordedEventAbi = CoffeeProductionContract.abi.find(
             (item) => item.name === 'ProductionRecorded' && item.type === 'event'
           );
-  
+
           const eventSignature = this.web3.eth.abi.encodeEventSignature(productionRecordedEventAbi);
           const eventLog = receipt.logs.find((log) => log.topics[0] === eventSignature);
           if (!eventLog) {
             alert('ProductionRecorded event not found in transaction logs');
             return;
           }
-  
+
           const decodedEvent = this.web3.eth.abi.decodeLog(
             productionRecordedEventAbi.inputs,
             eventLog.data,
             eventLog.topics.slice(1)
           );
-  
+
           return {
             coffeeName: decodedEvent.coffeeName,
             coffeeType: decodedEvent.coffeeType,
@@ -185,6 +192,7 @@
             timestamp: decodedEvent.timestamp,
             totalPrice: decodedEvent.price,
             origin: decodedEvent.origin,
+            status: decodedEvent.status
           };
         } catch (error) {
           console.error('Error fetching event data:', error);
@@ -215,11 +223,21 @@
       }
     },
     async mounted() {
-      this.web3 = new Web3(new Web3.providers.HttpProvider('http://127.0.0.1:7545'));
-      this.accounts = await this.web3.eth.getAccounts();
-      this.contract = new this.web3.eth.Contract(CoffeeProductionContract.abi, this.ProductionContractAddress);
-      this.StoredRecInfoContract = new this.web3.eth.Contract(StoredRecInfoContract.abi, this.StoredRecInfoContractAddress);
-      await this.getStoredData();
+      try {
+        this.web3 = new Web3(new Web3.providers.HttpProvider('http://127.0.0.1:7545'));
+        this.accounts = await this.web3.eth.getAccounts();
+        if (this.accounts.length === 0) {
+          this.isConnected = false;
+        } else {
+          this.isConnected = true;
+          this.contract = new this.web3.eth.Contract(CoffeeProductionContract.abi, this.ProductionContractAddress);
+          this.StoredRecInfoContract = new this.web3.eth.Contract(StoredRecInfoContract.abi, this.StoredRecInfoContractAddress);
+          await this.getStoredData();
+        }
+      } catch (error) {
+        console.error('Error connecting to blockchain network:', error);
+        this.isConnected = false;
+      }
     }
   };
   </script>
@@ -294,6 +312,11 @@
   .option-selector select {
     padding: 5px;
     font-size: 16px;
+  }
+  .network-error {
+    color: red;
+    margin-top: 10px;
+    font-weight: bold;
   }
   </style>
   
