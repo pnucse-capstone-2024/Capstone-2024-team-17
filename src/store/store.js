@@ -53,22 +53,21 @@ export const store = createStore({
       const product = state.confirmedProductions.find(
         item => item.coffeeName === coffeeName && item.beanType === beanType
       );
+      // 새 txInfo 객체
+      const sanitizedTxInfo = {
+        txHash: txInfo.txHash,
+        quantity: Number(txInfo.quantity) * 10,
+        timestamp: Number(txInfo.timestamp),
+      };
+    
       if (product) {
+        // 기존 제품 업데이트
         product.quantity = Number(product.quantity) + (Number(quantity) * 10);
-        // Ensure txInfo values are Numbers or Strings
-        const sanitizedTxInfo = {
-          txHash: txInfo.txHash,
-          quantity: Number(txInfo.quantity) * 10,
-          timestamp: Number(txInfo.timestamp),
-        };
         product.TxInfo.push(sanitizedTxInfo);
+        // timestamp 기준으로 오름차순 정렬
+        product.TxInfo.sort((a, b) => a.timestamp - b.timestamp);
       } else {
-        // If product doesn't exist, create a new one
-        const sanitizedTxInfo = {
-          txHash: txInfo.txHash,
-          quantity: Number(txInfo.quantity) * 10,
-          timestamp: Number(txInfo.timestamp),
-        };
+        // 제품이 존재하지 않는 경우 새로 생성
         state.confirmedProductions.push({
           coffeeName,
           beanType,

@@ -61,7 +61,7 @@
                 </ul>
               </div> -->
               <button class="check-btn" @click="handleApproveOrder(order.orderId)">✅</button>
-              <button class="delete-btn" @click="handleRejectOrder(order.orderId)">❌</button>
+              <button class="delete-btn" @click="handleRejectOrder(order)">❌</button>
             </li>
           </ul>
         </div>
@@ -351,7 +351,8 @@ export default {
     },
 
 
-    async handleRejectOrder(orderId) {
+    async handleRejectOrder(order) {
+      const orderId = order.orderId;
       try {
         // Get the order data from the smart contract
         const orderData = await this.orderContract.methods.getOrder(orderId).call();
@@ -373,7 +374,22 @@ export default {
         alert(`Order rejected and refund of ${this.web3.utils.fromWei(priceInWei, 'ether')} ETH sent to buyer.`);
 
         // Remove the rejected order from the list
-        this.orders = this.orders.filter(order => order.orderId !== orderId);
+        this.orders = this.orders.filter(o => o.orderId !== orderId);
+
+        // Update the confirmedProductions in the Vuex store
+        for (const txInfo of order.txInfos) {
+          const updatedQuantity = Number(txInfo.quantity) * 0.1;
+
+          this.$store.dispatch('addOrUpdateConfirmedProduction', {
+            coffeeName: order.coffeeName,
+            beanType: order.beanType,
+            quantity: updatedQuantity,
+            txInfo: {
+              ...txInfo,
+              quantity: updatedQuantity,
+            },
+          });
+        }
       } catch (error) {
         console.error('Error rejecting order:', error);
         alert('Error rejecting order');

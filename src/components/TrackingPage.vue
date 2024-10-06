@@ -43,6 +43,15 @@
                 <p><strong>Price:</strong> {{ formatPrice(eventData.price) }}</p>
                 <p><strong>Order Date:</strong> {{ formatTimestamp(Number(eventData.timestamp)) }}</p>
                 <p><strong>Buyer:</strong> {{ eventData.buyer }}</p>
+                <p><strong>Productuion Info:</strong>
+                <ul>
+                  <li v-for="(txInfo, txIndex) in eventData.TxInfos" :key="txIndex">
+                    {{ txIndex + 1 }}.<br>
+                    TxHash: {{ txInfo.txHash }}<br>
+                    Quantity: {{ txInfo.quantity }}<br>
+                    Production date: {{ formatTimestamp(txInfo.timestamp) }}
+                  </li>
+                </ul></p>
                 <p>
                   <strong>Status:</strong>
                   <span :style="{ color: getOrderStatusText(eventData.status).color }">
@@ -206,6 +215,19 @@ export default {
         const block = await this.web3.eth.getBlock(receipt.blockNumber);
         const timestamp = Number(block.timestamp);
 
+        const txHashes = orderData[7];
+        const txQuantities = orderData[8];
+        const txTimestamps = orderData[9];
+
+        const txInfos = [];
+            for (let j = 0; j < txHashes.length; j++) {
+              txInfos.push({
+                txHash: txHashes[j],
+                quantity: Number(txQuantities[j]), // Convert BigInt to Number
+                timestamp: Number(txTimestamps[j]), // Convert BigInt to Number
+              });
+            }
+
         return {
           coffeeName: orderData[1],
           beanType: orderData[2],
@@ -214,6 +236,7 @@ export default {
           buyer: orderData[5],
           status: Number(orderData[6]),
           timestamp: timestamp,
+          TxInfos: txInfos
         };
       } catch (error) {
         console.error('Error decoding order event:', error);
@@ -245,7 +268,7 @@ export default {
 
       switch (statusNum) {
         case 0:
-          return { text: 'Pending', color: 'orange' };
+          return { text: 'Registering', color: 'black' };
         case 1:
           return { text: 'Approved', color: 'green' };
         case 2:
