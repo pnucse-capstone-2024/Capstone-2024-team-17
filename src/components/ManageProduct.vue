@@ -36,7 +36,8 @@
           </section>
 
           <footer class="modal-footer">
-              <button type="button" class="btn-green" @click="saveProduction">Save Production</button>
+              <button v-if="!productionSaved" type="button" class="btn-green" @click="saveProduction">Save Production</button>
+              <button v-else type="button" class="btn-green" @click="close">Close</button>
           </footer>
       </div>
   </div>
@@ -70,11 +71,13 @@ export default {
       StoredProInfoContract: null,
       StoredProInfoContractAddress: '0x4DB7c6B838011D72aEAB8809eba59D3bC3D0e6a4',
       coffeePriceList: [], // To store coffee data
-      optionsPrices: [] // To store type fees
+      optionsPrices: [], // To store type fees
+      productionSaved: false,
     };
   },
   methods: {
     close() {
+      this.productionSaved = false;
       this.$router.push({ name: 'products-page' });
     },
     loadCoffeeData() {
@@ -169,6 +172,9 @@ export default {
 
           // Store in Vuex
           this.$store.commit('addProduction', productionData);
+
+          // Set productionSaved flag to true
+          this.productionSaved = true;
 
         } catch (error) {
           console.error('Transaction failed:', error);

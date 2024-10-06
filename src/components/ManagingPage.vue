@@ -9,13 +9,14 @@
         <select v-model="selectedOption" id="options">
           <option value="CurrentStock">Current stock</option>
           <option value="ReceivingHistory">Receiving history</option>
-          <option value="SalesStatus">Sales status</option>
+          <option value="SalesStatus">Sales history</option>
           <option value="SalesTable">Sales table</option>
         </select>
       </div>
 
       <!-- 선택된 옵션에 따라 다른 화면 표시 -->
       <div id="panel" class="panel-container">
+        
         <!-- Current Stock -->
         <div v-if="selectedOption === 'CurrentStock'">
           <h3>Current Stock</h3>
@@ -92,7 +93,7 @@
 
         <!-- Sales Status (OrderInfo) -->
         <div v-if="selectedOption === 'SalesStatus'">
-          <h3>Sales Status</h3>
+          <h3>Sales history</h3>
           <div v-if="isConnected">
             <table>
               <thead>
@@ -101,7 +102,7 @@
                   <th>O-date</th>
                   <th>Item</th>
                   <th>Type</th>
-                  <th>Quantity</th>
+                  <th>Quantity(100g)</th>
                   <th>Price</th>
                   <th>TxHash</th>
                 </tr>
@@ -137,6 +138,53 @@
           </div>
         </div>
 
+        <!-- Sales Table (SalesTable) -->
+        <div v-if="selectedOption === 'SalesTable'">
+          <h3>Current ETH(Ξ): {{ userBalance }}</h3>
+          <h3>Sales Table</h3>
+          <div v-if="paymentRecords.length > 0">
+            <table>
+              <thead>
+                <tr>
+                  <th>Payment Time</th>
+                  <th>Payment Type</th>
+                  <th>Coffee Name</th>
+                  <th>Coffee Type</th>
+                  <th>Amount</th>
+                  <th>TxHash</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="(record, index) in paymentRecords" :key="index">
+                  <td>{{ formatTimestamp(record.timestamp) }}</td>
+                  <td>{{ formatPaymentType(record.paymentType) }}</td>
+                  <td>{{ record.coffeeName }}</td>
+                  <td>{{ record.coffeeType }}</td>
+                  <td v-if="formatPaymentType(record.paymentType) === 'Sell'">+{{ formatAmount(record.amount) }}</td>
+                  <td v-if="formatPaymentType(record.paymentType) === 'Buy'">-{{ formatAmount(record.amount) }}</td>
+                  <td v-if="formatPaymentType(record.paymentType) === 'Refund'">-{{ formatAmount(record.amount) }}</td>
+                  <td>
+                    <span @click="showFullTxHash(record.txHash)" class="txhash-short">
+                      {{ truncateTxHash(record.txHash) }}
+                    </span>
+                    <!-- Full txHash modal -->
+                    <div v-if="showModal && selectedTxHash === record.txHash" class="modal-overlay" @click.self="closeModal">
+                      <div class="modal">
+                        <h4>Transaction Hash</h4>
+                        <p><span class="break-word">{{ record.txHash }}</span></p>
+                        <button @click="closeModal" class="modal-close-btn">Close</button>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div v-else>
+            <p>No payment records available.</p>
+          </div>
+        </div>
+
   
         </div>
       </div>
@@ -152,7 +200,7 @@ import coffeeData from '../../public/data/coffee.json';
 import options from '../../public/data/option.json';
 import StoredDelInfoContract from '../abi/StoredDelInfo.json';
 import OrderContract from '../abi/OrderContract.json'; // Import OrderContract ABI
-
+import PaymentRecordContract from '../abi/PaymentRecord.json'; // Import ABI
 
 export default {
   data() {
@@ -184,7 +232,10 @@ export default {
       showModal: false,
       selectedTxHash: null,
       isConnected: false,
-      Data: null
+      Data: null,
+      paymentRecordContract: null,
+      paymentRecordAddress: '0xf622eE8c53ff8d0FDdA2B1d35A0CFEA9177F3628', // Replace with actual address
+      paymentRecords: [],
     };
   },
   computed: {
@@ -257,9 +308,64 @@ export default {
         alert('An error occurred while fetching the event data');
       }
     },
+    async loadUserBalance() {
+      try {
+        this.accounts = await this.web3.eth.getAccounts();
+        if (this.accounts.length === 0) {
+          console.error('No accounts found');
+          return;
+        }
+        const userId = this.logedUser.id; // 로그인한 사용자의 ID를 가져옴
+        const balance = await this.web3.eth.getBalance(this.accounts[userId]); // 해당 인덱스의 이더리움 잔액 조회
+        this.userBalance = parseFloat(this.web3.utils.fromWei(balance, 'ether')).toFixed(2); // 잔액을 ETH로 변환하여 저장
+      } catch (error) {
+        console.error('Error fetching ETH balance:', error);
+      }
+    },
+
+    async loadPaymentRecords() {
+      try {
+        const count = await this.paymentRecordContract.methods.getPaymentCount().call();
+        const records = [];
+
+        for (let i = 0; i < count; i++) {
+          const payment = await this.paymentRecordContract.methods.getPayment(i).call();
+          records.push({
+            timestamp: Number(payment[0]),
+            paymentType: Number(payment[1]),
+            coffeeName: payment[2],
+            coffeeType: payment[3],
+            amount: payment[4],
+            txHash: payment[5],
+          });
+        }
+
+        this.paymentRecords = records;
+      } catch (error) {
+        console.error('Error loading payment records:', error);
+      }
+    },
+
+    formatPaymentType(type) {
+      switch (type) {
+        case 0:
+          return 'Buy';
+        case 1:
+          return 'Sell';
+        case 2:
+          return 'Refund';
+        default:
+          return 'Unknown';
+      }
+    },
+
     formatTimestamp(unixTimestamp) {
       const date = new Date(unixTimestamp * 1000);
       return date.toLocaleString('en-US');
+    },
+    formatAmount(amountInWei) {
+      const amountInEth = this.web3.utils.fromWei(amountInWei.toString(), 'ether');
+      return `${parseFloat(amountInEth).toFixed(2)} ETH`;
     },
     getAvailableQuantity(coffeeName, type) {
       const product = this.confirmedProductions.find(
@@ -452,6 +558,7 @@ export default {
   async mounted() {
     try {
       this.web3 = new Web3(new Web3.providers.HttpProvider('http://127.0.0.1:7545'));
+      await this.loadUserBalance(); // 로그인한 사용자의 잔액을 로드
       this.accounts = await this.web3.eth.getAccounts();
       if (this.accounts.length === 0) {
         this.isConnected = false;
@@ -471,6 +578,15 @@ export default {
         OrderContract.abi,
         this.orderContractAddress
       );
+
+      this.paymentRecordContract = new this.web3.eth.Contract(
+        PaymentRecordContract.abi,
+        this.paymentRecordAddress
+      );
+
+      // Load payment records
+      await this.loadPaymentRecords();
+
       // Fetch stored delivery data
       await this.getStoredDelData();
       } catch (error) {

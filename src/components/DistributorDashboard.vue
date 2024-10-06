@@ -81,6 +81,7 @@ import CoffeeProductionContract from '../abi/CoffeeProduction.json';
 import StoredRecInfoContract from '../abi/StoredRecInfo.json'; // Import StoredRecInfo ABI
 import OrderContract from '../abi/OrderContract.json';
 import StoredDelInfoContract from '../abi/StoredDelInfo.json';
+import PaymentRecordContract from '../abi/PaymentRecord.json'; // Import ABI
 
 export default {
   data() {
@@ -105,6 +106,8 @@ export default {
       StoredDelInfoContract: null,
       StoredDelInfoContractAddress: '0x26A3a9ae165b3e74b89614A0017E59d46bDc9B14', // Update with your contract address
       orderIdToTxHash: {},
+      paymentRecordContract: null,
+      paymentRecordAddress: '0xf622eE8c53ff8d0FDdA2B1d35A0CFEA9177F3628'
     };
   },
   methods: {
@@ -174,6 +177,42 @@ export default {
         });
 
         console.log('Confirmed production updated successfully!');
+
+        // Get the block timestamp
+        const secondblock = await this.web3.eth.getBlock('latest');
+        const secondtimestamp = secondblock.timestamp;
+
+        // Record the payment in PaymentRecord contract
+        const paymentType = 0; // 0 for Buy
+        const userId = this.logedUser.id;
+
+        // Convert product.price to Wei for storing
+        const priceInWei = this.web3.utils.toWei(product.price.toString(), 'ether');
+
+        const estimatedGas = await this.paymentRecordContract.methods
+          .addPayment(
+            secondtimestamp,
+            paymentType,
+            product.coffeeName,
+            product.coffeeType,
+            priceInWei,
+            txHash
+          )
+          .estimateGas({ from: this.accounts[userId] });
+
+        await this.paymentRecordContract.methods
+          .addPayment(
+            secondtimestamp,
+            paymentType,
+            product.coffeeName,
+            product.coffeeType,
+            priceInWei,
+            txHash
+          )
+          .send({ from: this.accounts[userId], gas: estimatedGas });
+
+        console.log('Payment recorded in PaymentRecord contract');
+
       } catch (error) {
         console.error('Error handling approve click:', error);
         alert('Error handling approve click');
@@ -390,6 +429,39 @@ export default {
             },
           });
         }
+
+
+        // Record the refund in PaymentRecord contract
+        const block = await this.web3.eth.getBlock('latest');
+        const timestamp = block.timestamp;
+        const paymentType = 2; // 2 for Refund
+        const userId = this.logedUser.id;
+
+        const txHash = this.orderIdToTxHash[orderId]; // Get txHash associated with the order
+
+        const estimatedGas = await this.paymentRecordContract.methods
+          .addPayment(
+            timestamp,
+            paymentType,
+            order.coffeeName,
+            order.beanType,
+            order.price,
+            txHash
+          )
+          .estimateGas({ from: this.accounts[userId] });
+
+        await this.paymentRecordContract.methods
+          .addPayment(
+            timestamp,
+            paymentType,
+            order.coffeeName,
+            order.beanType,
+            order.price,
+            txHash
+          )
+          .send({ from: this.accounts[userId], gas: estimatedGas });
+
+        console.log('Refund recorded in PaymentRecord contract');
       } catch (error) {
         console.error('Error rejecting order:', error);
         alert('Error rejecting order');
@@ -423,9 +495,13 @@ export default {
     await this.fetchOrders(); // Fetch orders when component is mounted
     await this.getOrderEvents(); // 주문 이벤트 가져오기
     this.StoredDelInfoContract = new this.web3.eth.Contract(
-    StoredDelInfoContract.abi,
-    this.StoredDelInfoContractAddress
-  );
+      StoredDelInfoContract.abi,
+      this.StoredDelInfoContractAddress
+    );
+    this.paymentRecordContract = new this.web3.eth.Contract(
+      PaymentRecordContract.abi,
+      this.paymentRecordAddress
+    );
   }
 };
 </script>
