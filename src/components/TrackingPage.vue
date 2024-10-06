@@ -6,9 +6,9 @@
       <div class="TrackingPage">
         <div class="PageDetails">
           <div>
-            <h2>Production Tracking</h2>
+            <h2>Production and Order Tracking</h2>
             <!-- TxHash 입력 필드 -->
-            <h3>Transaction Production Data</h3>
+            <h3>Transaction Data</h3>
             <div>
               <input type="text" v-model="txHashInput" placeholder="Transaction Hash" />
               <button @click="fetchEventData">Fetch Blockchain Data</button>
@@ -16,32 +16,61 @@
 
             <!-- 이벤트 데이터 표시 -->
             <div v-if="eventData">
-              <p><strong>Coffee Origin:</strong> {{ eventData.coffeeName }}</p>
-              <p><strong>Coffee Type:</strong> {{ eventData.coffeeType }}</p>
-              <p><strong>Yield (kg):</strong> {{ eventData.quantity }}</p>
-              <p><strong>Production Date:</strong> {{ formatTimestamp(Number(eventData.timestamp)) }}</p>
-              <p v-if="isSeller || isDistributor || isManager"><strong>Price:</strong> {{ eventData.totalPrice }}</p>
-              <p><strong>Producer:</strong> {{ eventData.producer }}</p>
-              <p>
-                <strong>Status:</strong> 
-                <!-- 상태 텍스트와 색상을 동적으로 바인딩 -->
-                <span :style="{ color: getStatusText(eventData.status).color }">
-                  {{ getStatusText(eventData.status).text }}
-                </span>
-              </p>
+              <!-- Production Event Data -->
+              <div v-if="eventData.type === 'production'">
+                <h4>Production Data</h4>
+                <p><strong>Coffee Name:</strong> {{ eventData.coffeeName }}</p>
+                <p><strong>Coffee Type:</strong> {{ eventData.coffeeType }}</p>
+                <p><strong>Yield (kg):</strong> {{ eventData.quantity }}</p>
+                <p><strong>Production Date:</strong> {{ formatTimestamp(Number(eventData.timestamp)) }}</p>
+                <p v-if="isSeller || isDistributor || isManager"><strong>Price:</strong> {{ eventData.totalPrice }} ETH</p>
+                <p><strong>Producer:</strong> {{ eventData.producer }}</p>
+                <p>
+                  <strong>Status:</strong>
+                  <!-- 상태 텍스트와 색상을 동적으로 바인딩 -->
+                  <span :style="{ color: getStatusText(eventData.status).color }">
+                    {{ getStatusText(eventData.status).text }}
+                  </span>
+                </p>
+              </div>
+
+              <!-- Order Event Data -->
+              <div v-else-if="eventData.type === 'order'">
+                <h4>Order Data</h4>
+                <p><strong>Coffee Name:</strong> {{ eventData.coffeeName }}</p>
+                <p><strong>Bean Type:</strong> {{ eventData.beanType }}</p>
+                <p><strong>Quantity:</strong> {{ eventData.quantity }}</p>
+                <p><strong>Price:</strong> {{ formatPrice(eventData.price) }}</p>
+                <p><strong>Order Date:</strong> {{ formatTimestamp(Number(eventData.timestamp)) }}</p>
+                <p><strong>Buyer:</strong> {{ eventData.buyer }}</p>
+                <p>
+                  <strong>Status:</strong>
+                  <span :style="{ color: getOrderStatusText(eventData.status).color }">
+                    {{ getOrderStatusText(eventData.status).text }}
+                  </span>
+                </p>
+              </div>
+
+              <!-- Unknown Event Data -->
+              <div v-else>
+                <p>No recognizable event found for this transaction hash.</p>
+              </div>
             </div>
 
-          <!-- 저장된 TxHash 목록 표시 -->
-           <div>
-            <h3>Stored My Transaction Hashes</h3>
-            <button @click="getStoredTxHashes">Refresh Stored TxHashes</button>
-            <ul>
-              <li v-for="(txHash, index) in storedTxHashes" :key="index">{{ formatTimestamp(timestamps[txHash].timestamp) }},
-                <span :style="{ color: getStatusText(timestamps[txHash].status).color }">
-                  {{ getStatusText(timestamps[txHash].status).text }}
-                </span>, {{ txHash }}</li>
-            </ul>
-          </div>
+            <!-- 저장된 TxHash 목록 표시 -->
+            <div>
+              <h3>Stored My Transaction Hashes</h3>
+              <button @click="getStoredTxHashes">Refresh Stored TxHashes</button>
+              <ul>
+                <li v-for="(txHash, index) in storedTxHashes" :key="index">
+                  {{ formatTimestamp(timestamps[txHash]?.timestamp) }},
+                  <span :style="{ color: getStatusText(timestamps[txHash]?.status).color }">
+                    {{ getStatusText(timestamps[txHash]?.status).text }}
+                  </span>,
+                  {{ txHash }}
+                </li>
+              </ul>
+            </div>
 
           </div>
         </div>
@@ -49,11 +78,11 @@
     </section>
   </section>
 </template>
-
 <script>
 import Web3 from 'web3';
 import CoffeeProductionContract from '../abi/CoffeeProduction.json';
 import StoredProInfoContract from '../abi/StoredProInfo.json';
+import OrderContract from '../abi/OrderContract.json';
 
 export default {
   data() {
@@ -61,9 +90,11 @@ export default {
       txHashInput: '',
       eventData: null,
       contract: null,
+      orderContract: null,
       web3: null,
       ProductionContractAddress: '0x2806B49E0b477a3A26A735B3AC8d78c349F4292F',
-      StoredProInfoContractAddress: '0x34b8FF48b80B62b4FfA6f79c3C0f68a236a95cf4',
+      OrderContractAddress: '0xD48f4716fa30a98A5528075A9bB6AFc34c8A8c4C',
+      StoredProInfoContractAddress: '0x4DB7c6B838011D72aEAB8809eba59D3bC3D0e6a4',
       StoredProInfoContract: null,
       storedTxHashes: [],
       accounts: [],
@@ -72,61 +103,10 @@ export default {
     };
   },
   methods: {
-    async fetchProductionStatus(txHash) {
-      try {
-        const receipt = await this.web3.eth.getTransactionReceipt(txHash);
-        if (!receipt) {
-          console.error('Transaction receipt not found');
-          return 'Unknown';
-        }
-
-        const productionRecordedEventAbi = CoffeeProductionContract.abi.find(
-          (item) => item.name === 'ProductionRecorded' && item.type === 'event'
-        );
-
-        const eventSignature = this.web3.eth.abi.encodeEventSignature(productionRecordedEventAbi);
-        const eventLog = receipt.logs.find((log) => log.topics[0] === eventSignature);
-        if (!eventLog) {
-          console.error('ProductionRecorded event not found in transaction logs');
-          return 'Unknown';
-        }
-
-        const decodedEvent = this.web3.eth.abi.decodeLog(
-          productionRecordedEventAbi.inputs,
-          eventLog.data,
-          eventLog.topics.slice(1)
-        );
-
-        const productionId = decodedEvent.productionId;
-        const production = await this.contract.methods.getProduction(productionId).call();
-        
-        return production.status;
-      } catch (error) {
-        console.error('Error fetching production status:', error);
-        return 'Unknown';
-      }
-    },
-    formatTimestamp(unixTimestamp) {
-      const date = new Date(unixTimestamp * 1000);
-      return date.toLocaleString('en-US');
-    },
-    getStatusText(status) {
-      let statusNum;
-
-      if (typeof status === 'bigint') {
-        statusNum = Number(status); // BigInt를 일반 숫자로 변환
-      }
-
-      switch (statusNum) {
-        case 0:
-          return { text: 'Registering', color: 'black' }; // 기본 색상
-        case 1:
-          return { text: 'Approved', color: 'green' }; // 초록색
-        case 2:
-          return { text: 'Rejected', color: 'red' }; // 빨간색
-        default:
-          return { text: 'Unknown', color: 'gray' }; // 기본 색상
-      }
+    formatPrice(priceInWei) {
+      if (!priceInWei) return 'Unknown';
+      const priceInEth = this.web3.utils.fromWei(priceInWei.toString(), 'ether');
+      return `${parseFloat(priceInEth).toFixed(2)} ETH`;
     },
     async fetchEventData() {
       if (!this.txHashInput) {
@@ -140,7 +120,29 @@ export default {
           return;
         }
 
-        // Find the ProductionRecorded event in the transaction logs
+        // Try to decode ProductionRecorded event
+        const productionEvent = await this.decodeProductionEvent(receipt);
+        if (productionEvent) {
+          this.eventData = { ...productionEvent, type: 'production' };
+          return;
+        }
+
+        // Try to decode OrderCreated event
+        const orderEvent = await this.decodeOrderEvent(receipt);
+        if (orderEvent) {
+          this.eventData = { ...orderEvent, type: 'order' };
+          return;
+        }
+
+        // If no known event is found
+        this.eventData = { type: 'unknown' };
+      } catch (error) {
+        console.error('Error fetching event data:', error);
+        alert('An error occurred while fetching the event data');
+      }
+    },
+    async decodeProductionEvent(receipt) {
+      try {
         const productionRecordedEventAbi = CoffeeProductionContract.abi.find(
           (item) => item.name === 'ProductionRecorded' && item.type === 'event'
         );
@@ -149,11 +151,9 @@ export default {
 
         const eventLog = receipt.logs.find((log) => log.topics[0] === eventSignature);
         if (!eventLog) {
-          alert('ProductionRecorded event not found in transaction logs');
-          return;
+          return null;
         }
 
-        // Decode the event log to get the productionId
         const decodedEvent = this.web3.eth.abi.decodeLog(
           productionRecordedEventAbi.inputs,
           eventLog.data,
@@ -164,9 +164,8 @@ export default {
 
         // Fetch the production data using productionId
         const production = await this.contract.methods.getProduction(productionId).call();
-        console.log('production.status:', production.status);
 
-        this.eventData = {
+        return {
           coffeeName: production.coffeeName,
           coffeeType: production.coffeeType,
           quantity: production.quantity,
@@ -175,68 +174,153 @@ export default {
           producer: production.producer,
           status: production.status,
         };
-
       } catch (error) {
-        console.error('Error fetching event data:', error);
-        alert('An error occurred while fetching the event data');
+        console.error('Error decoding production event:', error);
+        return null;
       }
     },
-    async fetchBlockTimestamp(txHash) {
+    async decodeOrderEvent(receipt) {
       try {
-        const transaction = await this.web3.eth.getTransaction(txHash);
-        if (!transaction) {
-          alert('Transaction not found');
-          return;
+        const orderCreatedEventAbi = OrderContract.abi.find(
+          (item) => item.name === 'OrderCreated' && item.type === 'event'
+        );
+
+        const eventSignature = this.web3.eth.abi.encodeEventSignature(orderCreatedEventAbi);
+
+        const eventLog = receipt.logs.find((log) => log.topics[0] === eventSignature);
+        if (!eventLog) {
+          return null;
         }
 
-        const block = await this.web3.eth.getBlock(transaction.blockNumber);
-        if (!block) {
-          alert('Block not found');
-          return;
-        }
+        const decodedEvent = this.web3.eth.abi.decodeLog(
+          orderCreatedEventAbi.inputs,
+          eventLog.data,
+          eventLog.topics.slice(1)
+        );
 
-        const timestamp = Number(block.timestamp); // 타임스탬프를 Number로 변환
-        console.log('Block Timestamp:', timestamp);
+        const orderId = decodedEvent.orderId;
 
-        // Vue 3에서는 객체에 동적으로 값을 추가해도 반응형이 유지됨
-        this.timestamps[txHash] = timestamp; // 직접 할당
+        // Fetch the order data using orderId
+        const orderData = await this.orderContract.methods.getOrder(orderId).call();
 
-        return timestamp;
+        const block = await this.web3.eth.getBlock(receipt.blockNumber);
+        const timestamp = Number(block.timestamp);
+
+        return {
+          coffeeName: orderData[1],
+          beanType: orderData[2],
+          quantity: Number(orderData[3]),
+          price: orderData[4],
+          buyer: orderData[5],
+          status: Number(orderData[6]),
+          timestamp: timestamp,
+        };
       } catch (error) {
-        console.error('Error fetching block timestamp:', error);
-        alert('An error occurred while fetching the block timestamp');
+        console.error('Error decoding order event:', error);
+        return null;
       }
     },
-async getStoredTxHashes() {
-  const userId = this.logedUser.id;
-  try {
-    const txHashes = await this.StoredProInfoContract.methods.getAllStrings().call({ from: this.accounts[userId] });
-    this.storedTxHashes = txHashes;
+    getStatusText(status) {
+      if (status === undefined || status === null) {
+        return { text: 'Unknown', color: 'gray' };
+      }
+      let statusNum = Number(status);
 
-    // 각 해시의 타임스탬프와 상태를 가져옴
-    for (let txHash of txHashes) {
-      const timestamp = await this.fetchBlockTimestamp(txHash);
-      const status = await this.fetchProductionStatus(txHash); // 상태 값을 가져옴
-      this.timestamps[txHash] = { timestamp, status }; // 타임스탬프와 상태를 저장
-    }
-  } catch (error) {
-    console.error('Error fetching stored TxHashes:', error);
-  }
-},
+      switch (statusNum) {
+        case 0:
+          return { text: 'Registering', color: 'black' };
+        case 1:
+          return { text: 'Approved', color: 'green' };
+        case 2:
+          return { text: 'Rejected', color: 'red' };
+        default:
+          return { text: 'Unknown', color: 'gray' };
+      }
+    },
+    getOrderStatusText(status) {
+      if (status === undefined || status === null) {
+        return { text: 'Unknown', color: 'gray' };
+      }
+      let statusNum = Number(status);
+
+      switch (statusNum) {
+        case 0:
+          return { text: 'Pending', color: 'orange' };
+        case 1:
+          return { text: 'Approved', color: 'green' };
+        case 2:
+          return { text: 'Rejected', color: 'red' };
+        default:
+          return { text: 'Unknown', color: 'gray' };
+      }
+    },
+    formatTimestamp(unixTimestamp) {
+      if (!unixTimestamp) return 'Unknown';
+      const date = new Date(unixTimestamp * 1000);
+      return date.toLocaleString('en-US');
+    },
+    async getStoredTxHashes() {
+      const userId = this.logedUser.id;
+      try {
+        const txHashes = await this.StoredProInfoContract.methods
+          .getAllStrings()
+          .call({ from: this.accounts[userId] });
+        this.storedTxHashes = txHashes;
+
+        // Fetch timestamps and statuses for each txHash
+        for (let txHash of txHashes) {
+          const receipt = await this.web3.eth.getTransactionReceipt(txHash);
+          if (!receipt) continue;
+
+          const block = await this.web3.eth.getBlock(receipt.blockNumber);
+          const timestamp = Number(block.timestamp);
+
+          // Try to decode production event
+          let status;
+          const productionEvent = await this.decodeProductionEvent(receipt);
+          if (productionEvent) {
+            status = productionEvent.status;
+          } else {
+            // Try to decode order event
+            const orderEvent = await this.decodeOrderEvent(receipt);
+            if (orderEvent) {
+              status = orderEvent.status;
+            } else {
+              status = 'Unknown';
+            }
+          }
+
+          this.timestamps[txHash] = { timestamp, status };
+        }
+      } catch (error) {
+        console.error('Error fetching stored TxHashes:', error);
+      }
+    },
   },
-  
   async mounted() {
     this.web3 = new Web3(new Web3.providers.HttpProvider('http://127.0.0.1:7545'));
     this.isSeller = this.logedUser.seller;
     this.isManager = this.logedUser.manager;
     this.isDistributor = this.logedUser.distributor;
     this.accounts = await this.web3.eth.getAccounts();
-    this.contract = new this.web3.eth.Contract(CoffeeProductionContract.abi, this.ProductionContractAddress);
-    this.StoredProInfoContract = new this.web3.eth.Contract(StoredProInfoContract.abi, this.StoredProInfoContractAddress);
+    this.contract = new this.web3.eth.Contract(
+      CoffeeProductionContract.abi,
+      this.ProductionContractAddress
+    );
+    this.orderContract = new this.web3.eth.Contract(
+      OrderContract.abi,
+      this.OrderContractAddress
+    );
+    this.StoredProInfoContract = new this.web3.eth.Contract(
+      StoredProInfoContract.abi,
+      this.StoredProInfoContractAddress
+    );
+
     await this.getStoredTxHashes();
   },
 };
 </script>
+
 
 
 

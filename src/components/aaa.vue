@@ -327,6 +327,25 @@ export default {
                 alert(`There was an error processing your transaction: ${error.message}`);
             }
             },
+            async getStoredData() {
+                const userId = this.logedUser.id;
+                try {
+                    const dataEntries = await this.StoredRecInfoContract.methods.getAllStrings().call({ from: this.accounts[userId] });
+                    this.storedData = [];
+                    console.log("storedRecInfoContarctData: ", dataEntries);
+                    for (let dataEntry of dataEntries) {
+                    const txHash = dataEntry.txHash;
+                    const eventData = await this.fetchEventData(txHash);
+                    if (eventData.status !== 'Rejected') {
+                        this.storedData.push(dataEntry);
+                    }
+                    this.eventData[txHash] = eventData;
+                    }
+                    console.log('Stored Data:', this.storedData);
+                } catch (error) {
+                    console.error('Error fetching stored data:', error);
+                }
+            },
             getAvailableTxInfo(coffeeName, beanType, amountNeeded) {
                 const product = this.$store.getters.getConfirmedProductions.find(
                 (item) => item.coffeeName === coffeeName && item.beanType === beanType

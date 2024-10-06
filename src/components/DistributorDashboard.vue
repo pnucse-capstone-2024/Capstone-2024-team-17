@@ -97,13 +97,14 @@ export default {
       ProductionContractAddress: '0x2806B49E0b477a3A26A735B3AC8d78c349F4292F', // Update with your contract address
       productionIdToTxHash: {},
       StoredRecInfoContract: null,
-      StoredRecInfoContractAddress: '0x062DF085C934c6488F8Cd532cCcaA9f56FbCdD21', // Update with your contract address
+      StoredRecInfoContractAddress: '0xef5114488A6e51Ae464EF2B415A034Af4b98e612', // Update with your contract address
       logedUser: JSON.parse(sessionStorage.getItem('logeduser')),
       orderContract: null,
       orderContractAddress: '0xD48f4716fa30a98A5528075A9bB6AFc34c8A8c4C', // Replace with your deployed contract address
       orders: [],
       StoredDelInfoContract: null,
-      StoredDelInfoContractAddress: '0x75e0fE9e49CAF971c315560D11657D658f7C1788', // Update with your contract address
+      StoredDelInfoContractAddress: '0x26A3a9ae165b3e74b89614A0017E59d46bDc9B14', // Update with your contract address
+      orderIdToTxHash: {},
     };
   },
   methods: {
@@ -312,24 +313,34 @@ export default {
     async handleApproveOrder(orderId) {
       try {
         // Approve the order in the smart contract and get the transaction receipt
-        const receipt = await this.orderContract.methods
+        await this.orderContract.methods
           .approveOrder(orderId)
           .send({ from: this.accounts[this.logedUser.id] });
         alert('Order approved');
 
-        // Get the transaction hash from the receipt
-        const txHash = receipt.transactionHash;
+        // Get the transaction hash from the orderIdToTxHash
+        const txHash = this.orderIdToTxHash[orderId];
+        if (txHash) {
+          // Store the txHash in StoredDelInfoContract
+          const userId = this.logedUser.id;
+          const estimatedGas = await this.StoredDelInfoContract.methods
+            .addString(txHash)
+            .estimateGas({ from: this.accounts[userId] });
+          await this.StoredDelInfoContract.methods
+            .addString(txHash)
+            .send({ from: this.accounts[userId], gas: estimatedGas });
 
-        // Store the txHash in StoredDelInfoContract
-        const userId = this.logedUser.id;
-        const estimatedGas = await this.StoredDelInfoContract.methods
-          .addString(txHash)
-          .estimateGas({ from: this.accounts[userId] });
-        await this.StoredDelInfoContract.methods
-          .addString(txHash)
-          .send({ from: this.accounts[userId], gas: estimatedGas });
+          alert('Transaction hash stored in StoredDelInfo contract');
+          
+          // Fetch the stored data from StoredDelInfoContract and log it
+          const storedData = await this.StoredDelInfoContract.methods
+            .getAllStrings()
+            .call({ from: this.accounts[userId] });
 
-        alert('Transaction hash stored in StoredDelInfo contract');
+          console.log('Stored data in StoredDelInfo contract:', storedData);
+        } else {
+          console.warn(`No txHash found for orderId: ${orderId}`);
+        }
 
         // Remove the approved order from the list
         this.orders = this.orders.filter(order => order.orderId !== orderId);
@@ -338,6 +349,7 @@ export default {
         alert('Error approving order');
       }
     },
+
 
     async handleRejectOrder(orderId) {
       try {
@@ -367,6 +379,23 @@ export default {
         alert('Error rejecting order');
       }
     },
+    async getOrderEvents() {
+      try {
+        const events = await this.orderContract.getPastEvents('OrderCreated', {
+          fromBlock: 0,
+          toBlock: 'latest',
+        });
+
+        for (const event of events) {
+          const orderId = event.returnValues.orderId;
+          const txHash = event.transactionHash;
+          this.orderIdToTxHash[orderId] = txHash;
+          console.log('getOrderEvent txHash:', txHash);
+        }
+      } catch (error) {
+        console.error('Error fetching OrderCreated events:', error);
+      }
+    }
   },
   async mounted() {
     this.web3 = new Web3(new Web3.providers.HttpProvider('http://127.0.0.1:7545'));
@@ -376,6 +405,7 @@ export default {
     await this.fetchProductions();
     this.orderContract = new this.web3.eth.Contract(OrderContract.abi, this.orderContractAddress);
     await this.fetchOrders(); // Fetch orders when component is mounted
+    await this.getOrderEvents(); // 주문 이벤트 가져오기
     this.StoredDelInfoContract = new this.web3.eth.Contract(
     StoredDelInfoContract.abi,
     this.StoredDelInfoContractAddress

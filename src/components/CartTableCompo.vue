@@ -96,7 +96,7 @@ export default {
             orderContract: null,
             orderContractAddress: '0xD48f4716fa30a98A5528075A9bB6AFc34c8A8c4C',
             StoredProInfoContract: null,
-            StoredProInfoContractAddress: '0x34b8FF48b80B62b4FfA6f79c3C0f68a236a95cf4',
+            StoredProInfoContractAddress: '0x4DB7c6B838011D72aEAB8809eba59D3bC3D0e6a4',
         }
     },
 
@@ -208,7 +208,6 @@ export default {
             try {
                 let transactionHashList = []; // 주문별로 txHash를 저장하기 위한 리스트
 
-                // 기존 결제 처리 코드
                 for (let coffee of shoppingCart) {
                     const coffeeName = coffee.coffeeName;
                     const beanType = coffee.bType;
@@ -216,18 +215,58 @@ export default {
                     const quantity = Number(coffee.amount);
                     const priceInEth = parseFloat(this.calculateWhole(coffee.price, coffee.bType, coffee.amount));
                     const priceInWei = this.web3.utils.toWei(priceInEth.toString(), 'ether');
+                    const orderedAmount = quantity;
 
-                    // 트랜잭션 발생
-                    const tx = await this.contract.methods.purchaseCoffee(coffeeIndex, quantity).send({
+                    // 구매 트랜잭션 발생
+                    await this.contract.methods.purchaseCoffee(coffeeIndex, quantity).send({
                         from: this.accounts[this.logedUser.id],
                         to: this.accounts[22],
                         value: priceInWei,
                     });
 
-                    // 트랜잭션이 성공하면 txHash 저장
-                    const transactionHash = tx.transactionHash;
-                    transactionHashList.push(transactionHash); // txHash 리스트에 추가
-                    console.log('Your payment has been made successfully. Transaction Hash:', transactionHash);
+                    const product = this.$store.getters.getConfirmedProductions.find(
+                        (item) => item.coffeeName === coffeeName && item.beanType === beanType
+                    );
+
+                    if (product) {
+                        // TxInfo 업데이트
+                        let remainingAmount = orderedAmount;
+                        const updatedTxInfo = [];
+                        for (const txInfo of product.TxInfo) {
+                            if (remainingAmount <= 0) {
+                                updatedTxInfo.push(txInfo);
+                                continue;
+                            }
+                            const availableQuantity = Number(txInfo.quantity);
+                            const usedQuantity = Math.min(availableQuantity, remainingAmount);
+                            const newQuantity = availableQuantity - usedQuantity;
+
+                            if (newQuantity > 0) {
+                                updatedTxInfo.push({
+                                    txHash: txInfo.txHash,
+                                    quantity: newQuantity,
+                                    timestamp: txInfo.timestamp,
+                                });
+                            }
+                            remainingAmount -= usedQuantity;
+                        }
+                        if (remainingAmount > 0) {
+                            alert(`Insufficient stock for ${coffeeName} (${beanType})`);
+                            return;
+                        }
+
+                        // Vuex 스토어의 제품 정보 업데이트
+                        const newTotalQuantity = updatedTxInfo.reduce((sum, tx) => sum + Number(tx.quantity), 0);
+                        this.$store.dispatch('updateConfirmedProductionAfterOrder', {
+                            coffeeName,
+                            beanType,
+                            newQuantity: newTotalQuantity,
+                            newTxInfo: updatedTxInfo,
+                        });
+                    } else {
+                        alert(`${coffeeName} (${beanType}) cannot be found`);
+                        return;
+                    }
 
                     // TxInfo 데이터 준비
                     const txInfos = coffee.txInfo || [];
@@ -235,25 +274,29 @@ export default {
                     const txQuantities = txInfos.map(tx => Number(tx.quantity));
                     const txTimestamps = txInfos.map(tx => Number(tx.timestamp));
 
-                    // TxInfo 배열이 일치하는지 확인
+                    // TxInfo 배열 검증
                     if (txHashes.length !== txQuantities.length || txHashes.length !== txTimestamps.length) {
                         console.error('TxInfo arrays must have the same length');
                         continue;
                     }
 
-                    // 스마트 컨트랙트의 createOrder 호출
+                    // 주문 생성 트랜잭션 발생 및 트랜잭션 해시 저장
                     const estimatedGas = await this.orderContract.methods
                         .createOrder(coffeeName, beanType, quantity, priceInWei, txHashes, txQuantities, txTimestamps)
                         .estimateGas({ from: this.accounts[userId] });
 
-                    await this.orderContract.methods
+                    const orderTx = await this.orderContract.methods
                         .createOrder(coffeeName, beanType, quantity, priceInWei, txHashes, txQuantities, txTimestamps)
                         .send({ from: this.accounts[userId], gas: estimatedGas });
+
+                    // 트랜잭션 해시 저장
+                    const transactionHash = orderTx.transactionHash;
+                    transactionHashList.push(transactionHash);
+                    console.log('Order has been created successfully. Transaction Hash:', transactionHash);
                 }
 
-                // 트랜잭션 저장
+                // 트랜잭션 해시 저장
                 for (const txHash of transactionHashList) {
-                    // StoredProInfoContract에 트랜잭션 해시 저장
                     const estimatedGasForAddString = await this.StoredProInfoContract.methods
                         .addString(txHash)
                         .estimateGas({ from: this.accounts[userId] });
@@ -286,6 +329,7 @@ export default {
                 alert(`There was an error processing your transaction: ${error.message}`);
             }
         },
+
             getAvailableTxInfo(coffeeName, beanType, amountNeeded) {
                 const product = this.$store.getters.getConfirmedProductions.find(
                 (item) => item.coffeeName === coffeeName && item.beanType === beanType

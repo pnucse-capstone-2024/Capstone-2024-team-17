@@ -90,7 +90,7 @@
         </div>
         </div>
 
-        <!-- Sales Status -->
+        <!-- Sales Status (OrderInfo) -->
         <div v-if="selectedOption === 'SalesStatus'">
           <h3>Sales Status</h3>
           <div v-if="isConnected">
@@ -98,6 +98,7 @@
               <thead>
                 <tr>
                   <th>Dispatch Date</th>
+                  <th>O-date</th>
                   <th>Item</th>
                   <th>Type</th>
                   <th>Quantity</th>
@@ -106,20 +107,23 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="(data, index) in storedDelData" :key="index">
-                  <td>{{ formatTimestamp(Number(data.timestamp)) }}</td>
-                  <td>{{ eventDelData[data.txHash]?.coffeeName || 'Unknown' }}</td>
-                  <td>{{ eventDelData[data.txHash]?.beanType || 'Unknown' }}</td>
-                  <td>{{ eventDelData[data.txHash]?.quantity || 'Unknown' }}</td>
-                  <td>{{ formatPrice(eventDelData[data.txHash]?.price) || 'Unknown' }}</td>
+                <tr v-for="(data, txHash) in eventDelData" :key="txHash">
+                  <td>{{ formatTimestamp(data.dispatchDate) || 'Unknown' }}</td>
+                  <td>{{ formatTimestamp(data.timestamp) || 'Unknown' }}</td>
+                  <td>{{ data.coffeeName || 'Unknown' }}</td>
+                  <td>{{ data.beanType || 'Unknown' }}</td>
+                  <td>{{ data.quantity || 'Unknown' }}</td>
+                  <td>{{ formatPrice(data.price) || 'Unknown' }}</td>
                   <td>
                     <!-- Display truncated txHash -->
-                    <span @click="showFullTxHash(data.txHash)" class="txhash-short"><span class="break-word">{{ truncateTxHash(data.txHash) }}</span></span>
+                    <span @click="showFullTxHash(txHash)" class="txhash-short">
+                      <span class="break-word">{{ truncateTxHash(txHash) }}</span>
+                    </span>
                     <!-- Full txHash modal -->
-                    <div v-if="showModal && selectedTxHash === data.txHash" class="modal-overlay" @click.self="closeModal">
+                    <div v-if="showModal && selectedTxHash === txHash" class="modal-overlay" @click.self="closeModal">
                       <div class="modal">
                         <h4>Transaction Hash</h4>
-                        <p><span class="break-word">{{ data.txHash }}</span></p>
+                        <p><span class="break-word">{{ txHash }}</span></p>
                         <button @click="closeModal" class="modal-close-btn">Close</button>
                       </div>
                     </div>
@@ -165,9 +169,9 @@ export default {
       ProductionContractAddress: '0x2806B49E0b477a3A26A735B3AC8d78c349F4292F', // Update with your contract address
       productionIdToTxHash: {},
       StoredRecInfoContract: null,
-      StoredRecInfoContractAddress: '0x062DF085C934c6488F8Cd532cCcaA9f56FbCdD21', // Update with your contract address
+      StoredRecInfoContractAddress: '0xef5114488A6e51Ae464EF2B415A034Af4b98e612', // Update with your contract address
       StoredDelInfoContract: null,
-      StoredDelInfoContractAddress: '0x75e0fE9e49CAF971c315560D11657D658f7C1788', // Update with your contract address
+      StoredDelInfoContractAddress: '0x26A3a9ae165b3e74b89614A0017E59d46bDc9B14', // Update with your contract address
       orderContract: null,
       orderContractAddress: '0xD48f4716fa30a98A5528075A9bB6AFc34c8A8c4C', // Update with your contract address
       storedDelData: [], // To store (timestamp, txHash) pairs from StoredDelInfo
@@ -180,6 +184,7 @@ export default {
       showModal: false,
       selectedTxHash: null,
       isConnected: false,
+      Data: null
     };
   },
   computed: {
@@ -190,16 +195,16 @@ export default {
   },
   methods: {
     formatPrice(priceInWei) {
-    if (!priceInWei) return 'Unknown';
-    const priceInEth = this.web3.utils.fromWei(priceInWei.toString(), 'ether');
-    return `${parseFloat(priceInEth).toFixed(2)} ETH`;
-  },
+      if (!priceInWei) return 'Unknown';
+      const priceInEth = this.web3.utils.fromWei(priceInWei.toString(), 'ether');
+      return `${parseFloat(priceInEth).toFixed(2)} ETH`;
+    },
     async getStoredData() {
       const userId = this.logedUser.id;
       try {
         const dataEntries = await this.StoredRecInfoContract.methods.getAllStrings().call({ from: this.accounts[userId] });
         this.storedData = [];
-
+        console.log("storedRecInfoContarctData: ", dataEntries);
         for (let dataEntry of dataEntries) {
           const txHash = dataEntry.txHash;
           const eventData = await this.fetchEventData(txHash);
@@ -208,6 +213,7 @@ export default {
           }
           this.eventData[txHash] = eventData;
         }
+        console.log('event Data:', this.eventData);
       } catch (error) {
         console.error('Error fetching stored data:', error);
       }
@@ -279,25 +285,98 @@ export default {
       const dataEntries = await this.StoredDelInfoContract.methods
         .getAllStrings()
         .call({ from: this.accounts[userId] });
+
+      console.log('dataEntries:', dataEntries); // Add this line to check dataEntries
+
       this.storedDelData = [];
+      this.Data = null;
 
       for (let dataEntry of dataEntries) {
-        const txHash = dataEntry.txHash;
-        const eventData = await this.fetchOrderEventData(txHash);
-        if (eventData) {
-          this.storedDelData.push(dataEntry);
-          this.eventDelData[txHash] = eventData;
+        // Adjust extraction of txHash based on dataEntries structure
+        const txHash = dataEntry.txHash; // If dataEntries is an array of txHash strings
+        // const txHash = dataEntry.txHash; // If dataEntries is an array of objects
+        const datatimestamp = dataEntry.timestamp;
+        console.log('dataEntry.txHash', txHash);
+        console.log('datatimestamp: ', datatimestamp);
+
+        if (!txHash || typeof txHash !== 'string') {
+          console.warn('Invalid txHash:', txHash);
+          continue;
         }
+
+        const receipt = await this.web3.eth.getTransactionReceipt(txHash);
+        if (!receipt) {
+          alert('Transaction receipt not found');
+          return;
+        }
+
+        const orderEvent = await this.decodeOrderEvent(receipt, datatimestamp);
+        if (orderEvent) {
+          this.Data = { ...orderEvent, type: 'order' };
+          console.log('this.Data', this.Data);
+        }
+        
+        this.eventDelData[txHash] = this.Data;
+        
       }
+      console.log('this.eventDelData:', this.eventDelData);
     } catch (error) {
       console.error('Error fetching stored delivery data:', error);
     }
   },
+  async decodeOrderEvent(receipt, datatimestamp) {
+      try {
+        const orderCreatedEventAbi = OrderContract.abi.find(
+          (item) => item.name === 'OrderCreated' && item.type === 'event'
+        );
+
+        const eventSignature = this.web3.eth.abi.encodeEventSignature(orderCreatedEventAbi);
+
+        const eventLog = receipt.logs.find((log) => log.topics[0] === eventSignature);
+        if (!eventLog) {
+          return null;
+        }
+
+        const decodedEvent = this.web3.eth.abi.decodeLog(
+          orderCreatedEventAbi.inputs,
+          eventLog.data,
+          eventLog.topics.slice(1)
+        );
+
+        const orderId = decodedEvent.orderId;
+
+        // Fetch the order data using orderId
+        const orderData = await this.orderContract.methods.getOrder(orderId).call();
+
+        const block = await this.web3.eth.getBlock(receipt.blockNumber);
+        const timestamp = Number(block.timestamp);
+
+        return {
+          coffeeName: orderData[1],
+          beanType: orderData[2],
+          quantity: Number(orderData[3]),
+          price: orderData[4],
+          buyer: orderData[5],
+          status: Number(orderData[6]),
+          timestamp: timestamp,
+          dispatchDate: Number(datatimestamp)
+        };
+      } catch (error) {
+        console.error('Error decoding order event:', error);
+        return null;
+      }
+    },
+
   async fetchOrderEventData(txHash) {
     try {
+      if (!txHash || typeof txHash !== 'string') {
+        console.error('Invalid txHash:', txHash);
+        return null;
+      }
+
       const receipt = await this.web3.eth.getTransactionReceipt(txHash);
       if (!receipt) {
-        console.warn('Transaction receipt not found');
+        console.warn('Transaction receipt not found for txHash:', txHash);
         return null;
       }
 
@@ -309,37 +388,65 @@ export default {
       const eventSignature = this.web3.eth.abi.encodeEventSignature(orderApprovedEventAbi);
       const eventLog = receipt.logs.find((log) => log.topics[0] === eventSignature);
       if (!eventLog) {
-        console.warn('OrderApproved event not found in transaction logs');
+        console.warn('OrderApproved event not found in transaction logs for txHash:', txHash);
         return null;
       }
 
+      // Since there are no indexed parameters, pass empty array for topics
       const decodedEvent = this.web3.eth.abi.decodeLog(
         orderApprovedEventAbi.inputs,
         eventLog.data,
-        eventLog.topics.slice(1)
+        []
       );
 
       const orderId = decodedEvent.orderId;
+      if (!orderId) {
+        console.warn('OrderId not found in decoded event for txHash:', txHash);
+        return null;
+      }
 
       // Get order details using orderId
       const orderData = await this.orderContract.methods.getOrder(orderId).call();
 
-      // Get the timestamp from the block
-      const block = await this.web3.eth.getBlock(receipt.blockNumber);
+      // Get the Dispatch Date from the block timestamp
+      const dispatchBlock = await this.web3.eth.getBlock(receipt.blockNumber);
+      const dispatchDate = dispatchBlock.timestamp;
+
+      // Fetch all OrderCreated events
+      const orderCreatedEvents = await this.orderContract.getPastEvents('OrderCreated', {
+        fromBlock: 0,
+        toBlock: 'latest',
+      });
+
+      // Find the event with the matching orderId
+      let orderDate;
+      for (let event of orderCreatedEvents) {
+        if (event.returnValues.orderId === orderId.toString()) {
+          const orderCreatedReceipt = await this.web3.eth.getTransactionReceipt(event.transactionHash);
+          const orderCreatedBlock = await this.web3.eth.getBlock(orderCreatedReceipt.blockNumber);
+          orderDate = orderCreatedBlock.timestamp;
+          break;
+        }
+      }
+
+      if (!orderDate) {
+        console.warn('OrderCreated event not found for orderId:', orderId);
+        orderDate = null;
+      }
 
       return {
         coffeeName: orderData[1],
         beanType: orderData[2],
         quantity: Number(orderData[3]),
         price: orderData[4],
-        timestamp: block.timestamp,
+        dispatchDate: dispatchDate,
+        orderDate: orderDate,
       };
     } catch (error) {
       console.error('Error fetching order event data:', error);
       return null;
     }
   },
-
 
   },
   async mounted() {
