@@ -180,8 +180,8 @@
               </tbody>
             </table>
           </div>
-          <div v-else>
-            <p>No payment records available.</p>
+          <div v-else class="network-error">
+            Currently, blockchain networks are not connected.
           </div>
         </div>
 
