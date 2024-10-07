@@ -10,8 +10,8 @@
             <!-- TxHash 입력 필드 -->
             <h3>Transaction Data</h3>
             <div>
-              <input type="text" v-model="txHashInput" placeholder="Transaction Hash" />
-              <button @click="fetchEventData">Fetch Blockchain Data</button>
+              <input class="txInput" type="text" v-model="txHashInput" placeholder="Transaction Hash" />
+              <button class="fetchButton" @click="fetchEventData">Fetch Blockchain Data</button>
             </div>
 
             <!-- 이벤트 데이터 표시 -->
@@ -68,8 +68,8 @@
 
             <!-- 저장된 TxHash 목록 표시 -->
             <div>
-              <h3>Stored My Transaction Hashes</h3>
-              <button @click="getStoredTxHashes">Refresh Stored TxHashes</button>
+              <h3 style="margin-top: 50px;">Stored My Transaction Hashes</h3>
+              <button class="fetchStoredButton" @click="getStoredTxHashes">Refresh Stored TxHashes</button>
               <ul>
                 <li v-for="(txHash, index) in storedTxHashes" :key="index">
                   {{ formatTimestamp(timestamps[txHash]?.timestamp) }},
@@ -397,7 +397,29 @@ h3{
     border-radius: 8px;
     cursor: pointer; 
 }
-
+.fetchButton {
+  padding: 1%;
+  font-weight: 700;
+  border-radius: 8px;
+  margin-top: 10px;
+  margin-left: 10px;
+  cursor: pointer; 
+}
+.fetchStoredButton{
+  padding: 1%;
+  font-weight: 700;
+  border-radius: 8px;
+  margin-top: 10px;
+  cursor: pointer; 
+}
+.txInput {
+  padding: 10px;
+  width: 300px; /* 입력 필드 너비 */
+  border: 1px solid #1b1b1b; /* 테두리 색상 */
+  border-radius: 5px;
+  margin-top: 10px; /* 위와의 간격 */
+  box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1); /* 입력 필드 그림자 */
+}
 .coffeePage{
     display: flex;
     width: 100%;

@@ -524,8 +524,20 @@ h3 {
   font-size: 1.8em;
   margin-bottom: 20px;
 }
-.content {
-  background: #ffc99f;
+.content{
+  background: #C69B7B;
+}
+.content > aside{
+  background-image: url('../../public/img/coffee-beans.png');
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position: center;
+  width: 15%;
+  aspect-ratio: 1;
+  position: absolute;
+  left: 5%;
+  bottom: 25%;
+  rotate: 5deg;
 }
 .right-side {
   background: #C69B7B;

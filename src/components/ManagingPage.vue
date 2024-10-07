@@ -1,6 +1,6 @@
 <template>
   <div class="content">
-    <figure class="left-video"><img src="../../public/img/blockchain.png" alt="Coffee Cup"></figure>
+    <figure class="left-image"><img src="../../public/img/logist.png" alt="Coffee Cup"></figure>
     <div class="right-side">
       <h2>Managing Page</h2>
 
@@ -19,8 +19,8 @@
         
         <!-- Current Stock -->
         <div v-if="selectedOption === 'CurrentStock'">
-          <h3>Current Stock</h3>
-          <h2>unit: 100g</h2>
+          <h3>Current Stock <span class="unit">(unit: 100g)</span></h3>
+          
           <div v-if="coffeeData.length > 0">
             <table>
               <thead>
@@ -599,6 +599,16 @@ export default {
 
 <style scoped>
 /* Existing styles */
+.left-image {
+  background-repeat: no-repeat;
+  background-size: contain;
+  background-position: center;
+  width: 15%;
+  aspect-ratio: 1;
+  position: absolute;
+  left: 5%;
+  bottom: 25%;
+}
 table {
   width: 100%;
   border-collapse: collapse;
@@ -621,7 +631,7 @@ h2 {
   align-items: flex-end;
   justify-content: center;
   height: 10vh;
-  font-size: 1.3em;
+  font-size: 2.3em;
 }
 h3 {
   font-family: 'Times New Roman', Times, serif;
@@ -634,6 +644,11 @@ figure {
   position: absolute;
   bottom: 2%;
   size: 10px;
+}
+.unit {
+  font-family: 'Times New Roman', Times, serif;
+  margin-left: 5px;
+  font-size: 0.8em;
 }
 .content {
   background: #ffc99f;
