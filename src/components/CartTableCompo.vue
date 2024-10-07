@@ -112,7 +112,12 @@ export default {
     },
 
     methods: {
-        ...mapActions(['updateConfirmedProductionQuantity', 'deleteCoffeeShoppingCart', 'clearCoffeeShoppingCart', 'addCoffeeOrderInfo']),
+        ...mapActions([
+            'updateConfirmedProductionQuantity',
+            'deleteCoffeeShoppingCart',
+            'clearCoffeeShoppingCart',
+            'addCoffeeOrderInfo', // Add this action
+        ]),
         
         
         getOrigin(coffeeName) {
@@ -363,6 +368,18 @@ export default {
                     .send({ from: this.accounts[userId], gas: estimatedGasPayment });
 
                 console.log('Sale recorded in PaymentRecord contract');
+
+                // **Store order info in Vuex store**
+                this.addCoffeeOrderInfo({
+                    txHash: transactionHash,
+                    orderData: {
+                    shipAddr: this.shipAddr,
+                    shipTel: this.shipTel,
+                    // You can add more order-related data here if needed
+                    },
+                });
+
+                console.log('Order information stored in Vuex store for txHash:', transactionHash);
                 }
 
                 // Clear shopping cart

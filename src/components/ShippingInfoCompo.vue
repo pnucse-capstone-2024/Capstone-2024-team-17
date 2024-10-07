@@ -56,6 +56,13 @@
         <button class="btn" v-if="!isCustomer" @click="handleSaveShippingInfo">
           Save
         </button>
+
+        <!-- Order Information Section -->
+        <div v-if="orderInfo" class="order-info">
+          <h3>Order Information</h3>
+          <p><strong>Address:</strong> {{ orderInfo.shipAddr }}</p>
+          <p><strong>Phone Number:</strong> {{ orderInfo.shipTel }}</p>
+        </div>
       </div>
     </div>
   </div>
@@ -99,10 +106,11 @@ export default {
         'Delayed',
         'Exception',
       ],
+      orderInfo: null,
     };
   },
   computed: {
-    ...mapGetters(['getShippingInfo']),
+    ...mapGetters(['getShippingInfo', 'getOrderInfo']),
   },
   methods: {
     ...mapActions(['saveShippingInfo']),
@@ -141,6 +149,8 @@ export default {
           currentLocation: '',
         };
       }
+      this.orderInfo = this.getOrderInfo(this.localTrackingNumber);
+      console.log('Fetched Order Info:', this.orderInfo);
     },
   },
   mounted() {
@@ -268,7 +278,6 @@ input[type='text'] {
 }
 input:disabled {
   color: #000 !important; /* 텍스트 색상 유지 */
-  font-weight: bold; /* 글씨를 진하게 유지 */
   background-color: #f0f0f0; /* 배경색 설정 */
   opacity: 1 !important; /* 흐리게 표시되지 않도록 */
 }
@@ -292,5 +301,21 @@ input:disabled {
 .getShippingInfoButton:active {
   transform: scale(0.95); /* 클릭 시 약간 축소 */
 }
+
+.order-info {
+  margin-top: 20px;
+  padding: 15px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+}
+
+.order-info h3 {
+  margin-bottom: 10px;
+}
+
+.order-info p {
+  margin: 5px 0;
+}
+
 
 </style>

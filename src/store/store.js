@@ -111,11 +111,8 @@ export const store = createStore({
       state.shoppingCart[userId] = [];
     },
     // order information
-    addOrderInfo(state, { userId, production }) {
-      if (!state.orderInfo[userId]) {
-        state.orderInfo[userId] = [];
-      }
-      state.orderInfo[userId].push(production);
+    addOrderInfo(state, { txHash, orderData }) {
+      state.orderInfo[txHash] = orderData;
     },
     removeOrderInfo(state, { userId, index }) {
       if (state.orderInfo[userId]) {
@@ -157,8 +154,8 @@ export const store = createStore({
       commit('clearShoppingCart', userId);
     },
     // order information
-    addCoffeeOrderInfo({ commit }, { userId, production }) {
-      commit('addOrderInfo', { userId, production });
+    addCoffeeOrderInfo({ commit }, { txHash, orderData }) {
+      commit('addOrderInfo', { txHash, orderData });
     },
     deleteCoffeeOrderInfo({ commit }, { userId, index }) {
       commit('removeOrderInfo', { userId, index });
@@ -183,8 +180,8 @@ export const store = createStore({
     getShoppingCart: (state) => (userId) => {
       return state.shoppingCart[userId] || [];
     },
-    getOrderInfo: (state) => (userId) => {
-      return state.orderInfo[userId] || [];
+    getOrderInfo: (state) => (txHash) => {
+      return state.orderInfo[txHash];
     },
     getShippingInfo: (state) => (txHash) => {
       return state.shippingInfos[txHash];
