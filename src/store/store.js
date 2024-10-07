@@ -6,7 +6,8 @@ export const store = createStore({
     coffeeProductions: [], // Seller가 입력한 데이터를 저장
     confirmedProductions: [],
     shoppingCart: {},
-    orderInfo: {}
+    orderInfo: {},
+    shippingInfos: {},
   },
   mutations: {
     // production
@@ -121,6 +122,9 @@ export const store = createStore({
         state.orderInfo[userId].splice(index, 1);
       }
     },
+    setShippingInfo(state, { txHash, shippingData }) {
+      state.shippingInfos[txHash] = shippingData;
+    },
   },
   actions: {
     addCoffeeProduction({ commit }, production) {
@@ -164,7 +168,10 @@ export const store = createStore({
     },
     updateConfirmedProductionAfterOrder({ commit }, payload) {
       commit('updateConfirmedProductionAfterOrder', payload);
-    }
+    },
+    saveShippingInfo({ commit }, { txHash, shippingData }) {
+      commit('setShippingInfo', { txHash, shippingData });
+    },
   },
   getters: {
     getCoffeeProductions: state => {
@@ -178,6 +185,9 @@ export const store = createStore({
     },
     getOrderInfo: (state) => (userId) => {
       return state.orderInfo[userId] || [];
+    },
+    getShippingInfo: (state) => (txHash) => {
+      return state.shippingInfos[txHash];
     },
   },
   plugins: [createPersistedState()] // vuex-persistedstate 플러그인 추가

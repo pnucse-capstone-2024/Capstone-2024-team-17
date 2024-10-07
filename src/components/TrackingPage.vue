@@ -75,25 +75,45 @@
                   {{ formatTimestamp(timestamps[txHash]?.timestamp) }},
                   <span :style="{ color: getStatusText(timestamps[txHash]?.status).color }">
                     {{ getStatusText(timestamps[txHash]?.status).text }}
-                  </span>,
+                  </span>
                   {{ txHash }}
+                  <button
+                  class="getShippingInfoButton"
+                  v-if="(getStatusText(timestamps[txHash]?.status).text === 'Approved') && (!isSeller)"
+                  @click="openShippingInfoModal(txHash)"
+                >
+                  <i class="fas fa-shipping-fast"></i> Shipping Info
+                </button>
                 </li>
               </ul>
             </div>
-
+            <!-- ShippingInfoModal 컴포넌트 -->
+            <ShippingInfoModal
+              v-if="isShippingInfoModalOpen"
+              :trackingNumber="selectedTxHash"
+              :initialShippingData="selectedShippingData"
+              @close="isShippingInfoModalOpen = false"
+            />
           </div>
         </div>
       </div>
     </section>
   </section>
 </template>
+
 <script>
 import Web3 from 'web3';
 import CoffeeProductionContract from '../abi/CoffeeProduction.json';
 import StoredProInfoContract from '../abi/StoredProInfo.json';
 import OrderContract from '../abi/OrderContract.json';
+import ShippingInfoModal from './ShippingInfoCompo.vue';
+import { mapGetters} from 'vuex';
 
 export default {
+  components: {
+    ShippingInfoModal,
+  },
+
   data() {
     return {
       txHashInput: '',
@@ -103,15 +123,30 @@ export default {
       web3: null,
       ProductionContractAddress: '0x2806B49E0b477a3A26A735B3AC8d78c349F4292F',
       OrderContractAddress: '0xD48f4716fa30a98A5528075A9bB6AFc34c8A8c4C',
-      StoredProInfoContractAddress: '0x4DB7c6B838011D72aEAB8809eba59D3bC3D0e6a4',
+      StoredProInfoContractAddress: '0xBA0Aae81E0d996e2Ea0235E62b809d098eEB9AdD',
       StoredProInfoContract: null,
       storedTxHashes: [],
       accounts: [],
       timestamps: {},
       logedUser: JSON.parse(sessionStorage.getItem('logeduser')),
+      isShippingInfoModalOpen: false,
+      selectedTxHash: '',
+      selectedShippingData: null,
     };
   },
+  computed: {
+    ...mapGetters(['getShippingInfo']),
+  },
   methods: {
+    openShippingInfoModal(txHash) {
+    this.selectedTxHash = txHash;
+    this.selectedShippingData = this.getShippingInfo(txHash) || {
+      status: '',
+      estimatedDelivery: '',
+      currentLocation: '',
+    };
+    this.isShippingInfoModalOpen = true;
+  },
     formatPrice(priceInWei) {
       if (!priceInWei) return 'Unknown';
       const priceInEth = this.web3.utils.fromWei(priceInWei.toString(), 'ether');
@@ -412,6 +447,12 @@ h3{
   margin-top: 10px;
   cursor: pointer; 
 }
+.getShippingInfoButton {
+  padding: 0.1%;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer; 
+}
 .txInput {
   padding: 10px;
   width: 300px; /* 입력 필드 너비 */
@@ -452,5 +493,40 @@ aside{
 }
 small{
     color: rgb(185, 189, 189);
-} 
+}
+.getShippingInfoButton {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px; /* 패딩을 늘려 버튼 크기를 키움 */
+  font-weight: 600; /* 글씨 두께를 증가시켜 강조 */
+  border-radius: 8px; /* 모서리를 둥글게 */
+  cursor: pointer; /* 커서를 포인터로 변경 */
+  background-color: #4CAF50; /* 녹색 배경 */
+  color: white; /* 흰색 텍스트 */
+  border: none; /* 기본 테두리 제거 */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* 약간의 그림자 추가 */
+  transition: background-color 0.3s ease, transform 0.2s; /* 부드러운 전환 효과 */
+  font-size: 16px; /* 텍스트 크기 조정 */
+}
+
+.getShippingInfoButton:hover {
+  background-color: #45a049; /* 호버 시 더 진한 녹색 */
+  transform: scale(0.85); /* 약간 확대 */
+}
+
+.getShippingInfoButton:active {
+  background-color: #3e8e41; /* 클릭 시 더 진한 녹색 */
+  transform: scale(0.98); /* 클릭 시 약간 축소 */
+}
+
+.getShippingInfoButton:disabled {
+  background-color: #a5a5a5; /* 비활성화 시 회색 배경 */
+  cursor: not-allowed; /* 비활성화 시 커서 변경 */
+}
+
+/* 아이콘 추가를 위한 스타일 */
+.getShippingInfoButton i {
+  margin-right: 8px; /* 아이콘과 텍스트 사이 간격 */
+}
+
 </style>

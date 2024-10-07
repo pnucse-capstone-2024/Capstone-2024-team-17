@@ -8,7 +8,7 @@
             <li><a href="/products" @click.prevent="goToProducts">Products</a></li>
             <li v-if="!isSeller && !isDistributor"><router-link to='/recipe'>Recipes</router-link></li>
             <li v-if="!isSeller && !isDistributor && !isManager"><router-link to='/shoppingcart'>Shopping Cart</router-link></li>
-            <li v-if="!isSeller"><router-link to='/shippinginfo'>Shipping Info</router-link></li>
+            <li v-if="isDistributor"><router-link to='/shippinginfo'>Enter Shipping</router-link></li>
             <li v-if="isDistributor"><router-link to='/distributordashboard'>Distributor Dashboard</router-link></li>
             <li v-if="isDistributor"><router-link to='/managingpage'>Managing Page</router-link></li>
             <li><router-link to='/TrackingPage'>Tracking Page</router-link></li>

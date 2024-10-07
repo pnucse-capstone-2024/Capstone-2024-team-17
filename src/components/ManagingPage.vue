@@ -142,7 +142,7 @@
         <div v-if="selectedOption === 'SalesTable'">
           <h3>Current ETH(Ξ): {{ userBalance }}</h3>
           <h3>Sales Table</h3>
-          <div v-if="paymentRecords.length > 0">
+          <div v-if="isConnected">
             <table>
               <thead>
                 <tr>
