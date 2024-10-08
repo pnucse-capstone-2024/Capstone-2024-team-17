@@ -15,19 +15,32 @@
             @change="fetchShippingData"
           />
         </div>
-        <!-- 배송 정보 입력 필드 -->
-        <div class="form-group">
+        <!-- 유통업자가 보는 배송 Status -->
+        <div v-if="isDistributor" class="form-group">
           <label for="status"><strong>Status:</strong></label>
           <select
             v-model="shippingData.status"
             id="status"
-            :class="{ 'readonly-select': isCustomer }"
             :disabled=false
           >
             <option disabled value="">Order Received</option>
             <option v-for="option in statusOptions" :key="option">{{ option }}</option>
           </select>
         </div>
+        <!-- 구매자가 보는 배송의 Status -->
+        <div v-else-if="isCustomer" class="form-group">
+          <label for="status"><strong>Status:</strong></label>
+          <select
+            v-model="shippingData.status"
+            id="status"
+            :class="{ 'readonly-select': isCustomer }"
+            :disabled=true
+          >
+            <option disabled value="">Order Received</option>
+            <option v-for="option in statusOptions" :key="option">{{ option }}</option>
+          </select>
+        </div>
+
         <div class="form-group">
           <label for="estimatedDelivery"><strong>Estimated Delivery:</strong></label>
           <input
@@ -91,6 +104,7 @@ export default {
     return {
       logedUser: JSON.parse(sessionStorage.getItem('logeduser')),
       isCustomer: false,
+      isDistributor: false,
       localTrackingNumber: '', // 로컬 데이터 속성으로 변경
       shippingData: {
         status: '',
@@ -156,6 +170,7 @@ export default {
   mounted() {
     if (this.logedUser) {
       this.isCustomer = this.logedUser.customer;
+      this.isDistributor = this.logedUser.distributor;
     }
     // 모든 경우에 localTrackingNumber를 trackingNumber로 설정
     this.localTrackingNumber = this.trackingNumber;
