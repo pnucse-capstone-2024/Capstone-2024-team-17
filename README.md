@@ -42,3 +42,8 @@ In the project directory, you can run:
    ### `npm run serve`
 
 This command starts the development server, and you can view the project in your browser at `http://localhost:8080`.
+
+
+For further detailed usage instructions, please refer to the pdf file below.
+
+[커피와컴 사용설명서.pdf](https://github.com/user-attachments/files/17349683/default.pdf)
