@@ -123,7 +123,7 @@ export default {
       web3: null,
       ProductionContractAddress: '0x2806B49E0b477a3A26A735B3AC8d78c349F4292F',
       OrderContractAddress: '0xD48f4716fa30a98A5528075A9bB6AFc34c8A8c4C',
-      StoredProInfoContractAddress: '0xBA0Aae81E0d996e2Ea0235E62b809d098eEB9AdD',
+      StoredProInfoContractAddress: '0x25A691E1e85a40420e95BCC3415e562Ec68d4497',
       StoredProInfoContract: null,
       storedTxHashes: [],
       accounts: [],

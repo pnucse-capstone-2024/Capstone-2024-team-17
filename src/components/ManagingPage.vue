@@ -219,7 +219,7 @@ export default {
       StoredRecInfoContract: null,
       StoredRecInfoContractAddress: '0xef5114488A6e51Ae464EF2B415A034Af4b98e612', // Update with your contract address
       StoredDelInfoContract: null,
-      StoredDelInfoContractAddress: '0x26A3a9ae165b3e74b89614A0017E59d46bDc9B14', // Update with your contract address
+      StoredDelInfoContractAddress: '0x5AfDcA4FFCD470148680eE79D91984e12199616A', // Update with your contract address
       orderContract: null,
       orderContractAddress: '0xD48f4716fa30a98A5528075A9bB6AFc34c8A8c4C', // Update with your contract address
       storedDelData: [], // To store (timestamp, txHash) pairs from StoredDelInfo

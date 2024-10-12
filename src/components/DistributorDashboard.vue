@@ -104,7 +104,7 @@ export default {
       orderContractAddress: '0xD48f4716fa30a98A5528075A9bB6AFc34c8A8c4C', // Replace with your deployed contract address
       orders: [],
       StoredDelInfoContract: null,
-      StoredDelInfoContractAddress: '0x26A3a9ae165b3e74b89614A0017E59d46bDc9B14', // Update with your contract address
+      StoredDelInfoContractAddress: '0x5AfDcA4FFCD470148680eE79D91984e12199616A', // Update with your contract address
       orderIdToTxHash: {},
       paymentRecordContract: null,
       paymentRecordAddress: '0xf622eE8c53ff8d0FDdA2B1d35A0CFEA9177F3628'
