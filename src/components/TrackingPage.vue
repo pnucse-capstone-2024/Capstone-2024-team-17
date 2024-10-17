@@ -31,7 +31,7 @@
                   <span :style="{ color: getStatusText(eventData.status).color }">
                     {{ getStatusText(eventData.status).text }}
                   </span>
-                </p>
+              </p>
               </div>
 
               <!-- Order Event Data -->
@@ -295,9 +295,9 @@ export default {
         case 0:
           return { text: 'Registering', color: 'black' };
         case 1:
-          return { text: 'Approved', color: 'green' };
+          return { text: 'Approved by primary distributor(CoffeeAndCom)', color: 'green' };
         case 2:
-          return { text: 'Rejected', color: 'red' };
+          return { text: 'Rejected by primary distributor(CoffeeAndCom)', color: 'red' };
         default:
           return { text: 'Unknown', color: 'gray' };
       }
@@ -312,9 +312,9 @@ export default {
         case 0:
           return { text: 'Registering', color: 'black' };
         case 1:
-          return { text: 'Approved', color: 'green' };
+          return { text: 'Approved by primary distributor(CoffeeAndCom)', color: 'green' };
         case 2:
-          return { text: 'Rejected', color: 'red' };
+          return { text: 'Rejected by primary distributor(CoffeeAndCom)', color: 'red' };
         default:
           return { text: 'Unknown', color: 'gray' };
       }
