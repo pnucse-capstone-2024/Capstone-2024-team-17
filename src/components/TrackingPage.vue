@@ -78,15 +78,21 @@
                   </span>
                   {{ txHash }}
                   <button
-                  class="getShippingInfoButton"
-                  v-if="(getStatusText(timestamps[txHash]?.status).text === 'Approved') && (!isSeller)"
-                  @click="openShippingInfoModal(txHash)"
-                >
-                  <i class="fas fa-shipping-fast"></i> Shipping Info
-                </button>
+                    class="getShippingInfoButton"
+                    v-if="(getStatusText(timestamps[txHash]?.status).text === 'Approved') && (!isSeller)"
+                    @click="openShippingInfoModal(txHash)"
+                  >
+                    <i class="fas fa-shipping-fast"></i> Shipping Info
+                  </button>
                 </li>
               </ul>
+
+              <!-- 네트워크 연결 상태에 따라 문구 표시 -->
+              <p v-if="!isConnected" style="color: red; font-weight: bold;">
+                Blockchain network is not connected.
+              </p>
             </div>
+
             <!-- ShippingInfoModal 컴포넌트 -->
             <ShippingInfoModal
               v-if="isShippingInfoModalOpen"
@@ -132,6 +138,7 @@ export default {
       isShippingInfoModalOpen: false,
       selectedTxHash: '',
       selectedShippingData: null,
+      isConnected: true, // 블록체인 연결 상태 변수 추가
     };
   },
   computed: {
@@ -356,25 +363,40 @@ export default {
     },
   },
   async mounted() {
-    this.web3 = new Web3(new Web3.providers.HttpProvider('http://127.0.0.1:7545'));
-    this.isSeller = this.logedUser.seller;
-    this.isManager = this.logedUser.manager;
-    this.isDistributor = this.logedUser.distributor;
-    this.accounts = await this.web3.eth.getAccounts();
-    this.contract = new this.web3.eth.Contract(
-      CoffeeProductionContract.abi,
-      this.ProductionContractAddress
-    );
-    this.orderContract = new this.web3.eth.Contract(
-      OrderContract.abi,
-      this.OrderContractAddress
-    );
-    this.StoredProInfoContract = new this.web3.eth.Contract(
-      StoredProInfoContract.abi,
-      this.StoredProInfoContractAddress
-    );
+    try {
+      this.web3 = new Web3(new Web3.providers.HttpProvider('http://127.0.0.1:7545'));
 
-    await this.getStoredTxHashes();
+      // 네트워크가 연결되어 있는지 확인
+      const isConnected = await this.web3.eth.net.isListening();
+      this.isConnected = isConnected; // 연결 상태 업데이트
+
+      if (!isConnected) {
+        this.isConnected = false;
+        return;
+      }
+
+      this.isSeller = this.logedUser.seller;
+      this.isManager = this.logedUser.manager;
+      this.isDistributor = this.logedUser.distributor;
+      this.accounts = await this.web3.eth.getAccounts();
+      this.contract = new this.web3.eth.Contract(
+        CoffeeProductionContract.abi,
+        this.ProductionContractAddress
+      );
+      this.orderContract = new this.web3.eth.Contract(
+        OrderContract.abi,
+        this.OrderContractAddress
+      );
+      this.StoredProInfoContract = new this.web3.eth.Contract(
+        StoredProInfoContract.abi,
+        this.StoredProInfoContractAddress
+      );
+
+      await this.getStoredTxHashes();
+    } catch (error) {
+      console.error('블록체인 네트워크 연결 오류:', error);
+      this.isConnected = false; // 네트워크 연결 실패 시 false로 설정
+    }
   },
 };
 </script>
