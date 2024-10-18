@@ -215,7 +215,7 @@ export default {
 
       } catch (error) {
         console.error('Error handling approve click:', error);
-        alert('Error handling approve click');
+        // alert('Error handling approve click');
       }
     },
     getStatusText(status) {

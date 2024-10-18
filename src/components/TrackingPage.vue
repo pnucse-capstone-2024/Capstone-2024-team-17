@@ -7,93 +7,172 @@
         <div class="PageDetails">
           <div>
             <h2>Production and Order Tracking</h2>
-            <!-- TxHash 입력 필드 -->
-            <h3>Transaction Data</h3>
-            <div>
-              <input class="txInput" type="text" v-model="txHashInput" placeholder="Transaction Hash" />
-              <button class="fetchButton" @click="fetchEventData">Fetch Blockchain Data</button>
+
+            <!-- Event Data Display -->
+            <div v-if="eventData" class="panel-container">
+              <h3>Transaction Data</h3>
+
+              <div v-if="eventData">
+                <!-- Production Event Data -->
+                <div v-if="eventData.type === 'production'">
+                  <h4>Production Data</h4>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Field</th>
+                        <th>Value</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><strong>Coffee Name</strong></td>
+                        <td>{{ eventData.coffeeName }}</td>
+                      </tr>
+                      <tr>
+                        <td><strong>Coffee Type</strong></td>
+                        <td>{{ eventData.coffeeType }}</td>
+                      </tr>
+                      <tr>
+                        <td><strong>Yield (kg)</strong></td>
+                        <td>{{ eventData.quantity }}</td>
+                      </tr>
+                      <tr>
+                        <td><strong>Production Date</strong></td>
+                        <td>{{ formatTimestamp(Number(eventData.timestamp)) }}</td>
+                      </tr>
+                      <tr v-if="isSeller || isDistributor || isManager">
+                        <td><strong>Price</strong></td>
+                        <td>{{ eventData.totalPrice }} ETH</td>
+                      </tr>
+                      <tr>
+                        <td><strong>Producer</strong></td>
+                        <td>{{ eventData.producer }}</td>
+                      </tr>
+                      <tr>
+                        <td><strong>Status</strong></td>
+                        <td>
+                          <span :style="{ color: getStatusText(eventData.status).color }">
+                            {{ getStatusText(eventData.status).text }}
+                          </span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <!-- Order Event Data -->
+                <div v-else-if="eventData.type === 'order'">
+                  <h4>Order Data</h4>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Field</th>
+                        <th>Value</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><strong>Coffee Name</strong></td>
+                        <td>{{ eventData.coffeeName }}</td>
+                      </tr>
+                      <tr>
+                        <td><strong>Bean Type</strong></td>
+                        <td>{{ eventData.beanType }}</td>
+                      </tr>
+                      <tr>
+                        <td><strong>Quantity</strong></td>
+                        <td>{{ eventData.quantity }}</td>
+                      </tr>
+                      <tr>
+                        <td><strong>Price</strong></td>
+                        <td>{{ formatPrice(eventData.price) }}</td>
+                      </tr>
+                      <tr>
+                        <td><strong>Order Date</strong></td>
+                        <td>{{ formatTimestamp(Number(eventData.timestamp)) }}</td>
+                      </tr>
+                      <tr>
+                        <td><strong>Buyer</strong></td>
+                        <td>{{ eventData.buyer }}</td>
+                      </tr>
+                      <tr>
+                        <td><strong>Status</strong></td>
+                        <td>
+                          <span :style="{ color: getOrderStatusText(eventData.status).color }">
+                            {{ getOrderStatusText(eventData.status).text }}
+                          </span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <br>
+                  <!-- Production Info Tables -->
+                  <div v-for="(txInfo, txIndex) in eventData.TxInfos" :key="txIndex">
+                    <h5>Production Info {{ txIndex + 1 }}</h5>
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Field</th>
+                          <th>Value</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td><strong>TxHash</strong></td>
+                          <td>
+                            <span @click="fetchProductionEventData(txInfo.txHash)" class="clickable">
+                              {{ txInfo.txHash }}
+                            </span>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td><strong>Quantity</strong></td>
+                          <td>{{ txInfo.quantity }}</td>
+                        </tr>
+                        <tr>
+                          <td><strong>Production Date</strong></td>
+                          <td>{{ formatTimestamp(txInfo.timestamp) }}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <!-- Unknown Event Data -->
+                <div v-else>
+                  <p>No recognizable event found for this transaction.</p>
+                </div>
+              </div>
             </div>
 
-            <!-- 이벤트 데이터 표시 -->
-            <div v-if="eventData">
-              <!-- Production Event Data -->
-              <div v-if="eventData.type === 'production'">
-                <h4>Production Data</h4>
-                <p><strong>Coffee Name:</strong> {{ eventData.coffeeName }}</p>
-                <p><strong>Coffee Type:</strong> {{ eventData.coffeeType }}</p>
-                <p><strong>Yield (kg):</strong> {{ eventData.quantity }}</p>
-                <p><strong>Production Date:</strong> {{ formatTimestamp(Number(eventData.timestamp)) }}</p>
-                <p v-if="isSeller || isDistributor || isManager"><strong>Price:</strong> {{ eventData.totalPrice }} ETH</p>
-                <p><strong>Producer:</strong> {{ eventData.producer }}</p>
-                <p>
-                  <strong>Status:</strong>
-                  <!-- 상태 텍스트와 색상을 동적으로 바인딩 -->
-                  <span :style="{ color: getStatusText(eventData.status).color }">
-                    {{ getStatusText(eventData.status).text }}
-                  </span>
-              </p>
-              </div>
-
-              <!-- Order Event Data -->
-              <div v-else-if="eventData.type === 'order'">
-                <h4>Order Data</h4>
-                <p><strong>Coffee Name:</strong> {{ eventData.coffeeName }}</p>
-                <p><strong>Bean Type:</strong> {{ eventData.beanType }}</p>
-                <p><strong>Quantity:</strong> {{ eventData.quantity }}</p>
-                <p><strong>Price:</strong> {{ formatPrice(eventData.price) }}</p>
-                <p><strong>Order Date:</strong> {{ formatTimestamp(Number(eventData.timestamp)) }}</p>
-                <p><strong>Buyer:</strong> {{ eventData.buyer }}</p>
-                <p><strong>Productuion Info:</strong>
-                <ul>
-                  <li v-for="(txInfo, txIndex) in eventData.TxInfos" :key="txIndex">
-                    {{ txIndex + 1 }}.<br>
-                    TxHash: {{ txInfo.txHash }}<br>
-                    Quantity: {{ txInfo.quantity }}<br>
-                    Production date: {{ formatTimestamp(txInfo.timestamp) }}
-                  </li>
-                </ul></p>
-                <p>
-                  <strong>Status:</strong>
-                  <span :style="{ color: getOrderStatusText(eventData.status).color }">
-                    {{ getOrderStatusText(eventData.status).text }}
-                  </span>
-                </p>
-              </div>
-
-              <!-- Unknown Event Data -->
-              <div v-else>
-                <p>No recognizable event found for this transaction hash.</p>
-              </div>
-            </div>
-
-            <!-- 저장된 TxHash 목록 표시 -->
+            <!-- Stored Transactions List -->
             <div>
-              <h3 style="margin-top: 50px;">Stored My Transaction Hashes</h3>
-              <button class="fetchStoredButton" @click="getStoredTxHashes">Refresh Stored TxHashes</button>
-              <ul>
+              <h3 style="margin-top: 50px;">Stored My Transaction Data</h3>
+              <button class="fetchStoredButton" @click="getStoredTxHashes">Refresh Stored Transactions</button>
+              <ul class="StoredTransactionList">
                 <li v-for="(txHash, index) in storedTxHashes" :key="index">
                   {{ formatTimestamp(timestamps[txHash]?.timestamp) }},
                   <span :style="{ color: getStatusText(timestamps[txHash]?.status).color }">
                     {{ getStatusText(timestamps[txHash]?.status).text }}
-                  </span>
-                  {{ txHash }}
+                  </span><br>
+                  <span @click="selectTransaction(txHash)" class="clickable">{{ 'Order ' + (index + 1) }}</span>,
+                  <!-- Shipping Info Button remains the same -->
                   <button
                     class="getShippingInfoButton"
-                    v-if="(getStatusText(timestamps[txHash]?.status).text === 'Approved') && (!isSeller)"
+                    v-if="(getStatusText(timestamps[txHash]?.status).text === 'Approved for 1st distributor (CoffeeAndCom)') && (!isSeller)"
                     @click="openShippingInfoModal(txHash)"
                   >
                     <i class="fas fa-shipping-fast"></i> Shipping Info
                   </button>
                 </li>
               </ul>
-
-              <!-- 네트워크 연결 상태에 따라 문구 표시 -->
-              <p v-if="!isConnected" style="color: red; font-weight: bold;">
+              <!-- Network Connection Status -->
+              <p v-if="!isConnected" class="network-error">
                 Blockchain network is not connected.
               </p>
             </div>
 
-            <!-- ShippingInfoModal 컴포넌트 -->
+            <!-- ShippingInfoModal Component -->
             <ShippingInfoModal
               v-if="isShippingInfoModalOpen"
               :trackingNumber="selectedTxHash"
@@ -106,6 +185,7 @@
     </section>
   </section>
 </template>
+
 
 <script>
 import Web3 from 'web3';
@@ -122,14 +202,15 @@ export default {
 
   data() {
     return {
-      txHashInput: '',
+      // Remove txHashInput
+      // txHashInput: '',
       eventData: null,
       contract: null,
       orderContract: null,
       web3: null,
       ProductionContractAddress: '0x2806B49E0b477a3A26A735B3AC8d78c349F4292F',
       OrderContractAddress: '0xD48f4716fa30a98A5528075A9bB6AFc34c8A8c4C',
-      StoredProInfoContractAddress: '0x25A691E1e85a40420e95BCC3415e562Ec68d4497',
+      StoredProInfoContractAddress: '0x140570EaF26cc9D37Db7a6Ea3A9ABEea15093B65',
       StoredProInfoContract: null,
       storedTxHashes: [],
       accounts: [],
@@ -138,7 +219,7 @@ export default {
       isShippingInfoModalOpen: false,
       selectedTxHash: '',
       selectedShippingData: null,
-      isConnected: true, // 블록체인 연결 상태 변수 추가
+      isConnected: true, // Blockchain connection status
     };
   },
   computed: {
@@ -146,14 +227,14 @@ export default {
   },
   methods: {
     openShippingInfoModal(txHash) {
-    this.selectedTxHash = txHash;
-    this.selectedShippingData = this.getShippingInfo(txHash) || {
-      status: '',
-      estimatedDelivery: '',
-      currentLocation: '',
-    };
-    this.isShippingInfoModalOpen = true;
-  },
+      this.selectedTxHash = txHash;
+      this.selectedShippingData = this.getShippingInfo(txHash) || {
+        status: '',
+        estimatedDelivery: '',
+        currentLocation: '',
+      };
+      this.isShippingInfoModalOpen = true;
+    },
     formatPrice(priceInWei) {
       if (!priceInWei) return 'Unknown';
       const priceInEth = this.web3.utils.fromWei(priceInWei.toString(), 'ether');
@@ -192,6 +273,27 @@ export default {
         alert('An error occurred while fetching the event data');
       }
     },
+    async fetchProductionEventData(txHash) {
+      try {
+        const receipt = await this.web3.eth.getTransactionReceipt(txHash);
+        if (!receipt) {
+          alert('Transaction receipt not found');
+          return;
+        }
+
+        const productionEvent = await this.decodeProductionEvent(receipt);
+        if (productionEvent) {
+          this.eventData = { ...productionEvent, type: 'production' };
+          return;
+        }
+
+        // If no production event is found
+        alert('No production event found for this transaction hash');
+      } catch (error) {
+        console.error('Error fetching production event data:', error);
+        alert('An error occurred while fetching the production event data');
+      }
+    },
     async decodeProductionEvent(receipt) {
       try {
         const productionRecordedEventAbi = CoffeeProductionContract.abi.find(
@@ -228,6 +330,35 @@ export default {
       } catch (error) {
         console.error('Error decoding production event:', error);
         return null;
+      }
+    },
+    async selectTransaction(txHash) {
+      try {
+        const receipt = await this.web3.eth.getTransactionReceipt(txHash);
+        if (!receipt) {
+          alert('Transaction receipt not found');
+          return;
+        }
+
+        // Try to decode ProductionRecorded event
+        const productionEvent = await this.decodeProductionEvent(receipt);
+        if (productionEvent) {
+          this.eventData = { ...productionEvent, type: 'production' };
+          return;
+        }
+
+        // Try to decode OrderCreated event
+        const orderEvent = await this.decodeOrderEvent(receipt);
+        if (orderEvent) {
+          this.eventData = { ...orderEvent, type: 'order' };
+          return;
+        }
+
+        // If no known event is found
+        this.eventData = { type: 'unknown' };
+      } catch (error) {
+        console.error('Error fetching event data:', error);
+        alert('An error occurred while fetching the event data');
       }
     },
     async decodeOrderEvent(receipt) {
@@ -295,9 +426,9 @@ export default {
         case 0:
           return { text: 'Registering', color: 'black' };
         case 1:
-          return { text: 'Approved by primary distributor(CoffeeAndCom)', color: 'green' };
+          return { text: 'Approved for 1st distributor (CoffeeAndCom)', color: 'green' };
         case 2:
-          return { text: 'Rejected by primary distributor(CoffeeAndCom)', color: 'red' };
+          return { text: 'Rejected for 1st distributor (CoffeeAndCom)', color: 'red' };
         default:
           return { text: 'Unknown', color: 'gray' };
       }
@@ -312,9 +443,9 @@ export default {
         case 0:
           return { text: 'Registering', color: 'black' };
         case 1:
-          return { text: 'Approved by primary distributor(CoffeeAndCom)', color: 'green' };
+          return { text: 'Approved for 1st distributor(CoffeeAndCom)', color: 'green' };
         case 2:
-          return { text: 'Rejected by primary distributor(CoffeeAndCom)', color: 'red' };
+          return { text: 'Rejected for 1st distributor(CoffeeAndCom)', color: 'red' };
         default:
           return { text: 'Unknown', color: 'gray' };
       }
@@ -366,9 +497,9 @@ export default {
     try {
       this.web3 = new Web3(new Web3.providers.HttpProvider('http://127.0.0.1:7545'));
 
-      // 네트워크가 연결되어 있는지 확인
+      // Check network connection
       const isConnected = await this.web3.eth.net.isListening();
-      this.isConnected = isConnected; // 연결 상태 업데이트
+      this.isConnected = isConnected;
 
       if (!isConnected) {
         this.isConnected = false;
@@ -394,8 +525,8 @@ export default {
 
       await this.getStoredTxHashes();
     } catch (error) {
-      console.error('블록체인 네트워크 연결 오류:', error);
-      this.isConnected = false; // 네트워크 연결 실패 시 false로 설정
+      console.error('Blockchain network connection error:', error);
+      this.isConnected = false;
     }
   },
 };
@@ -405,150 +536,134 @@ export default {
 
 
 <style scoped>
-h2{
-    font-family: 'Great Vibes', cursive;
-    width: 100%;
-    display: flex;
-    align-items: flex-end;
-    justify-content: center;
-    height: 10vh;
-    font-size: 2.3em;
-}
-h3{
-    border: 1px solid black;
-    border-radius: 10px;
-    padding: 2%;
-    word-break: break-all; /* 긴 단어가 넘칠 경우 줄바꿈 */
-    overflow-wrap: break-word; /* 단어가 넘칠 때 줄바꿈 */
-}
-.content{
-    background: #C69B7B;
-}
-.content > aside{
-    background-image: url('../../public/img/blockchain.png');
-    background-repeat: no-repeat;
-    background-size: contain;
-    background-position: center;
-    width: 20%;
-    aspect-ratio: 1;
-    position: absolute;
-    left: 5%;
-    bottom: 30%;
-    rotate: 0deg;
-}
-.right-side{
-    background: #C69B7B;
-}
-.PageDetails{
-    padding-left: 15%;
-    padding-right: 8%;
-    display: flex;
-    flex-direction: column;
-    row-gap: 10px;
-    z-index: 2;
+/* Existing styles */
+h2 {
+  font-family: 'Great Vibes', cursive;
+  width: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  height: 10vh;
+  font-size: 2.3em;
 }
 
-.manageProduct{
-    padding: 1%;
-    font-weight: 700;
-    border-radius: 8px;
-    cursor: pointer; 
+h3 {
+  font-family: 'Times New Roman', Times, serif;
+  text-align: center;
+  font-size: 1.8em;
+  margin-bottom: 20px;
 }
-.fetchButton {
+
+.content {
+  background: #ffc99f;
+}
+
+.right-side {
+  background: #C69B7B;
+  padding: 20px;
+}
+
+/* Adjusted .panel-container to prevent content from being pushed down */
+.panel-container {
+  background-color: white;
+  box-shadow: 3px 10px 3px rgba(0, 0, 0, 0.5);
+  border-radius: 0px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  padding: 40px;
+  max-width: 650px;
+  margin: 2% auto; /* Reduced top margin */
+}
+
+/* Added .PageDetails class to manage content layout */
+.PageDetails {
+  padding-left: 15%;
+  padding-right: 8%;
+  display: flex;
+  flex-direction: column;
+  row-gap: 10px;
+  z-index: 2;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+th,
+td {
+  border: 1px solid black;
+  padding: 8px;
+  text-align: center;
+  font-size: 12px;
+}
+
+th {
+  background-color: #f2f2f2;
+}
+
+.break-word {
+  word-break: break-all;
+}
+
+.network-error {
+  color: red;
+  margin-top: 10px;
+  font-weight: bold;
+}
+
+/* Style for clickable items */
+.clickable {
+  cursor: pointer;
+  color: blue;
+  text-decoration: underline;
+}
+
+/* Styles for buttons */
+.fetchStoredButton {
   padding: 1%;
   font-weight: 700;
   border-radius: 8px;
   margin-top: 10px;
-  margin-left: 10px;
   cursor: pointer; 
-}
-.fetchStoredButton{
-  padding: 1%;
-  font-weight: 700;
-  border-radius: 8px;
-  margin-top: 10px;
-  cursor: pointer; 
-}
-.getShippingInfoButton {
-  padding: 0.1%;
-  font-weight: 500;
-  border-radius: 8px;
-  cursor: pointer; 
-}
-.txInput {
-  padding: 10px;
-  width: 300px; /* 입력 필드 너비 */
-  border: 1px solid #1b1b1b; /* 테두리 색상 */
-  border-radius: 5px;
-  margin-top: 10px; /* 위와의 간격 */
-  box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1); /* 입력 필드 그림자 */
-}
-.coffeePage{
-    display: flex;
-    width: 100%;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    row-gap: 4em;
-}
-.text{
-    color: black;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-aside{
-    text-shadow: 2px 2px 5px black;
-}
-.coffeeImg{
-    border-radius: 5px;
 }
 
-.toModal{
-    padding: 5%;
-    font-weight: 700;
-    border-radius: 8px;
-    cursor: pointer;
-}
-.toModal:hover{
-    background-color: rgb(76, 37, 37);
-    color: white;
-}
-small{
-    color: rgb(185, 189, 189);
-}
 .getShippingInfoButton {
   display: inline-flex;
   align-items: center;
-  padding: 5px 10px; /* 패딩을 늘려 버튼 크기를 키움 */
-  font-weight: 600; /* 글씨 두께를 증가시켜 강조 */
-  border-radius: 8px; /* 모서리를 둥글게 */
-  cursor: pointer; /* 커서를 포인터로 변경 */
-  background-color: #4CAF50; /* 녹색 배경 */
-  color: white; /* 흰색 텍스트 */
-  border: none; /* 기본 테두리 제거 */
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* 약간의 그림자 추가 */
-  transition: background-color 0.3s ease, transform 0.2s; /* 부드러운 전환 효과 */
-  font-size: 16px; /* 텍스트 크기 조정 */
+  padding: 5px 10px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.3s ease, transform 0.2s;
+  font-size: 16px;
 }
 
 .getShippingInfoButton:hover {
-  background-color: #45a049; /* 호버 시 더 진한 녹색 */
-  transform: scale(0.85); /* 약간 확대 */
+  background-color: #45a049;
+  transform: scale(0.95);
 }
 
 .getShippingInfoButton:active {
-  background-color: #3e8e41; /* 클릭 시 더 진한 녹색 */
-  transform: scale(0.98); /* 클릭 시 약간 축소 */
+  background-color: #3e8e41;
+  transform: scale(0.98);
 }
 
 .getShippingInfoButton:disabled {
-  background-color: #a5a5a5; /* 비활성화 시 회색 배경 */
-  cursor: not-allowed; /* 비활성화 시 커서 변경 */
+  background-color: #a5a5a5;
+  cursor: not-allowed;
 }
 
-/* 아이콘 추가를 위한 스타일 */
+/* Icon inside the shipping info button */
 .getShippingInfoButton i {
-  margin-right: 8px; /* 아이콘과 텍스트 사이 간격 */
+  margin-right: 8px;
 }
-
 </style>
