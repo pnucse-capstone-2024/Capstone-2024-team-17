@@ -23,7 +23,7 @@
             id="status"
             :disabled=false
           >
-            <option disabled value="">Order Received</option>
+            <option disabled value="">Order accepted by 1st distributor.</option>
             <option v-for="option in statusOptions" :key="option">{{ option }}</option>
           </select>
         </div>
@@ -36,7 +36,7 @@
             :class="{ 'readonly-select': isCustomer }"
             :disabled=true
           >
-            <option disabled value="">Order Received</option>
+            <option disabled value="">Order accepted by 1st distributor.</option>
             <option v-for="option in statusOptions" :key="option">{{ option }}</option>
           </select>
         </div>

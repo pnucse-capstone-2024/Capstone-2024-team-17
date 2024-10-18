@@ -97,7 +97,7 @@ export default {
             orderContract: null,
             orderContractAddress: '0xD48f4716fa30a98A5528075A9bB6AFc34c8A8c4C',
             StoredProInfoContract: null,
-            StoredProInfoContractAddress: '0x140570EaF26cc9D37Db7a6Ea3A9ABEea15093B65',
+            StoredProInfoContractAddress: '0x429bA7a0FDF5b473d2a16d6E2d71f286659E8D63',
             paymentRecordContract: null,
             paymentRecordAddress: '0xf622eE8c53ff8d0FDdA2B1d35A0CFEA9177F3628'
         }

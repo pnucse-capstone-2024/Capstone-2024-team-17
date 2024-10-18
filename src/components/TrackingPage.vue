@@ -25,6 +25,10 @@
                     </thead>
                     <tbody>
                       <tr>
+                        <td><strong>TxHash</strong></td>
+                        <td>{{ this.txHash }}</td>
+                      </tr>
+                      <tr>
                         <td><strong>Coffee Name</strong></td>
                         <td>{{ eventData.coffeeName }}</td>
                       </tr>
@@ -210,10 +214,11 @@ export default {
       web3: null,
       ProductionContractAddress: '0x2806B49E0b477a3A26A735B3AC8d78c349F4292F',
       OrderContractAddress: '0xD48f4716fa30a98A5528075A9bB6AFc34c8A8c4C',
-      StoredProInfoContractAddress: '0x140570EaF26cc9D37Db7a6Ea3A9ABEea15093B65',
+      StoredProInfoContractAddress: '0x429bA7a0FDF5b473d2a16d6E2d71f286659E8D63',
       StoredProInfoContract: null,
       storedTxHashes: [],
       accounts: [],
+      txHash: null,
       timestamps: {},
       logedUser: JSON.parse(sessionStorage.getItem('logeduser')),
       isShippingInfoModalOpen: false,
@@ -280,7 +285,7 @@ export default {
           alert('Transaction receipt not found');
           return;
         }
-
+        this.txHash = txHash;
         const productionEvent = await this.decodeProductionEvent(receipt);
         if (productionEvent) {
           this.eventData = { ...productionEvent, type: 'production' };
@@ -339,6 +344,8 @@ export default {
           alert('Transaction receipt not found');
           return;
         }
+
+        this.txHash = txHash;
 
         // Try to decode ProductionRecorded event
         const productionEvent = await this.decodeProductionEvent(receipt);

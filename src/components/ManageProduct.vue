@@ -69,7 +69,7 @@ export default {
       transactionInfo: null,
       ProductionContractAddress: '0x2806B49E0b477a3A26A735B3AC8d78c349F4292F', // Update with new address
       StoredProInfoContract: null,
-      StoredProInfoContractAddress: '0x140570EaF26cc9D37Db7a6Ea3A9ABEea15093B65',
+      StoredProInfoContractAddress: '0x429bA7a0FDF5b473d2a16d6E2d71f286659E8D63',
       coffeePriceList: [], // To store coffee data
       optionsPrices: [], // To store type fees
       productionSaved: false,
