@@ -14,7 +14,7 @@
     "vue-router": "^4.4.5",
     "vuex": "^4.1.0",
     "vuex-persistedstate": "^4.1.0",
-    "web3": "^4.13.0"
+    "web3": "^4.14.0"
   },
   "devDependencies": {
     "@babel/core": "^7.12.16",

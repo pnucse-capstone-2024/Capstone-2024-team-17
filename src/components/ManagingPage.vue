@@ -667,7 +667,7 @@ figure {
   align-items: center;
   text-align: center;
   padding: 40px;
-  max-width: 650px;
+  max-width: 700px;
   margin: 10% auto 2% auto;
 }
 .break-word {
