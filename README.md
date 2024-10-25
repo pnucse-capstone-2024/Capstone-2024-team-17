@@ -13,49 +13,50 @@
 
 
 #### 2.1. 사용 기술
-프로그래밍 언어: Solidity 0.7.1, JavaScript
-프레임워크 및 라이브러리: Vue.js (Vue 3)
-개발 도구: Ganache v2.7.1, Remix IDE v0.7.1
+- 프로그래밍 언어: Solidity 0.7.1, JavaScript
+- 프레임워크 및 라이브러리: Vue.js (Vue 3)
+- 개발 도구: Ganache v2.7.1, Remix IDE v0.7.1
 
 
 ### 3. 설치 및 사용 방법
-a. For detailed usage instructions regarding **Smart Contract Deployment**, please refer to the pdf file below.
-[커피와컴 사용설명서.pdf](https://github.com/user-attachments/files/17349683/default.pdf)
+#### a. For detailed usage instructions regarding **Smart Contract Deployment**, please refer to the pdf file below.
 
-b. Before running the project, make sure to install the necessary packages. There are two types of installations: **global** and **local**. Please follow the instructions below to set up your environment correctly.
+   [커피와컴 사용설명서.pdf](https://github.com/user-attachments/files/17349683/default.pdf)
 
-#### 1. Global Installation (can be run from any directory)
+#### b. Before running the project, make sure to install the necessary packages. There are two types of installations: **global** and **local**. Please follow the instructions below to set up your environment correctly.
 
-The following commands need to be run globally to make Vue CLI and Vue available across your entire system:
+   #### 1. Global Installation (can be run from any directory)
 
-   #### `npm install vue -g`  
-   #### `npm install @vue/cli -g`
+   The following commands need to be run globally to make Vue CLI and Vue available across your entire system:
 
-These commands install `vue` and `@vue/cli` globally, allowing you to use Vue commands like `vue create` from anywhere in your terminal.
+      #### `npm install vue -g`  
+      #### `npm install @vue/cli -g`
 
-#### 2. Local Installation (must be run in the project directory)
+   These commands install `vue` and `@vue/cli` globally, allowing you to use Vue commands like `vue create` from anywhere in your terminal.
 
-The following commands should be executed in the root directory of your project (`CoffeeBean-main`), where the `package.json` file is located:
+   #### 2. Local Installation (must be run in the project directory)
 
-1. Navigate to your project directory:
+   The following commands should be executed in the root directory of your project (`CoffeeBean-main`), where the `package.json` file is located:
 
-   Example: `cd "C:\Users\username\OneDrive\바탕 화면\vue_projects\CoffeeBean-main"`
+   1. Navigate to your project directory:
 
-2. Then run the local installation commands:
+      Example: `cd "C:\Users\username\OneDrive\바탕 화면\vue_projects\CoffeeBean-main"`
 
-   #### `npm install axios`  
-   #### `npm install vue-router`  
-   #### `npm install web3`
-   #### `npm install vuex`
-   #### `npm install vuex-persistedstate`
+   2. Then run the local installation commands:
 
-#### 3. Running the Project
+      #### `npm install axios`  
+      #### `npm install vue-router`  
+      #### `npm install web3`
+      #### `npm install vuex`
+      #### `npm install vuex-persistedstate`
 
-In the project directory, you can run:
+   #### 3. Running the Project
 
-   #### `npm run serve`
+   In the project directory, you can run:
 
-This command starts the development server, and you can view the project in your browser at `http://localhost:8080`.
+      #### `npm run serve`
+
+   This command starts the development server, and you can view the project in your browser at `http://localhost:8080`.
 
 
 ### 4. 소개 및 시연 영상
