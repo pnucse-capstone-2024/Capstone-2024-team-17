@@ -19,30 +19,32 @@
 
 
 ### 3. 설치 및 사용 방법
-### a. For detailed usage instructions regarding **Smart Contract Deployment**, please refer to the pdf file below.
+- **스마트 컨트랙트 배포**에 대한 자세한 사용 방법은 아래 PDF 파일을 참조하십시오. 
 
-[커피와컴 사용설명서.pdf](https://github.com/user-attachments/files/17349683/default.pdf)
+   ##### [커피와컴 사용설명서.pdf](https://github.com/user-attachments/files/17349683/default.pdf)
 
-### b. Before running the project, make sure to install the necessary packages. There are two types of installations: **global** and **local**. Please follow the instructions below to set up your environment correctly.
 
-   #### 1. Global Installation (can be run from any directory)
 
-   The following commands need to be run globally to make Vue CLI and Vue available across your entire system:
+- 프로젝트를 실행하기 전에 필요한 패키지를 설치해야 합니다. 설치에는 **전역 설치**와 **로컬 설치** 두 가지 방법이 있습니다. 아래 지침에 따라 환경을 올바르게 설정해 주세요.
+
+   #### 1. 전역 설치 (어디서나 실행 가능)
+
+   다음 명령어는 시스템 전체에서 Vue CLI와 Vue를 사용할 수 있도록 전역으로 실행해야 합니다:
 
    #### `npm install vue -g`  
    #### `npm install @vue/cli -g`
 
-   These commands install `vue` and `@vue/cli` globally, allowing you to use Vue commands like `vue create` from anywhere in your terminal.
+   이 명령어들은 `vue`와 `@vue/cli`를 전역으로 설치하여 터미널에서 `vue create`와 같은 Vue 명령어를 어디서나 사용할 수 있게 해줍니다.
 
-   #### 2. Local Installation (must be run in the project directory)
+   #### 2. 로컬 설치 (프로젝트 디렉토리에서 실행해야 함)
 
-   The following commands should be executed in the root directory of your project (`CoffeeBean-main`), where the `package.json` file is located:
+   다음 명령어는 프로젝트의 루트 디렉토리(`CoffeeBean-main`)에서 실행해야 합니다. 여기에는 `package.json` 파일이 위치해 있습니다:
 
-   1. Navigate to your project directory:
+   1. 프로젝트 디렉토리로 이동:
 
-      Example: `cd "C:\Users\username\OneDrive\바탕 화면\vue_projects\CoffeeBean-main"`
+      예시: `cd "C:\Users\username\OneDrive\바탕 화면\vue_projects\CoffeeBean-main"`
 
-   2. Then run the local installation commands:
+   2. 그 다음, 로컬 설치 명령어를 실행하세요:
 
       #### `npm install axios`  
       #### `npm install vue-router`  
@@ -50,13 +52,13 @@
       #### `npm install vuex`
       #### `npm install vuex-persistedstate`
 
-   #### 3. Running the Project
+   #### 3. 프로젝트 실행
 
-   In the project directory, you can run:
+   프로젝트 디렉토리에서 아래 명령어를 실행할 수 있습니다:
 
    #### `npm run serve`
 
-   This command starts the development server, and you can view the project in your browser at `http://localhost:8080`.
+   이 명령어는 개발 서버를 시작하며, 브라우저에서 `http://localhost:8080`에서 프로젝트를 확인할 수 있습니다.
 
 
 ### 4. 소개 및 시연 영상
