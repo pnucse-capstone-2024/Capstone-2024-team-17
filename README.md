@@ -9,7 +9,7 @@
 
 ### 2. 상세설계
 #### 2.1. 시스템 구성도
-<img src="https://photos.app.goo.gl/YXF4mPap9qgSRWmF8" alt="시스템 구성도" width="600" />
+<img src="https://github.com/user-attachments/assets/359a3b11-e64e-4e7c-932f-1b8fed4f8074" alt="시스템 구성도" width="600" />
 
 
 #### 2.1. 사용 기술
@@ -19,18 +19,18 @@
 
 
 ### 3. 설치 및 사용 방법
-#### a. For detailed usage instructions regarding **Smart Contract Deployment**, please refer to the pdf file below.
+### a. For detailed usage instructions regarding **Smart Contract Deployment**, please refer to the pdf file below.
 
-   [커피와컴 사용설명서.pdf](https://github.com/user-attachments/files/17349683/default.pdf)
+[커피와컴 사용설명서.pdf](https://github.com/user-attachments/files/17349683/default.pdf)
 
-#### b. Before running the project, make sure to install the necessary packages. There are two types of installations: **global** and **local**. Please follow the instructions below to set up your environment correctly.
+### b. Before running the project, make sure to install the necessary packages. There are two types of installations: **global** and **local**. Please follow the instructions below to set up your environment correctly.
 
    #### 1. Global Installation (can be run from any directory)
 
    The following commands need to be run globally to make Vue CLI and Vue available across your entire system:
 
-      #### `npm install vue -g`  
-      #### `npm install @vue/cli -g`
+   #### `npm install vue -g`  
+   #### `npm install @vue/cli -g`
 
    These commands install `vue` and `@vue/cli` globally, allowing you to use Vue commands like `vue create` from anywhere in your terminal.
 
@@ -54,7 +54,7 @@
 
    In the project directory, you can run:
 
-      #### `npm run serve`
+   #### `npm run serve`
 
    This command starts the development server, and you can view the project in your browser at `http://localhost:8080`.
 
