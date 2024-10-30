@@ -62,7 +62,7 @@
 
 
 ### 4. 소개 및 시연 영상
-> 프로젝트에 대한 소개와 시연 영상을 넣으세요.
+https://www.youtube.com/watch?v=BG2wsTTnrP0&list=PLFUP9jG-TDp-CVdTbHvql-WoADl4gNkKj&index=17
 
 ### 5. 팀 소개
 #### 조주영 (201924586, 전기컴퓨터공학부-정보컴퓨터공학전공)
