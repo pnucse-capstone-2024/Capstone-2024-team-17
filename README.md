@@ -62,7 +62,8 @@
 
 
 ### 4. 소개 및 시연 영상
-https://www.youtube.com/watch?v=BG2wsTTnrP0&list=PLFUP9jG-TDp-CVdTbHvql-WoADl4gNkKj&index=17
+[![2024년 전기 졸업과제 17 커피와컴](https://img.youtube.com/vi/BG2wsTTnrP0/0.jpg)](https://www.youtube.com/watch?v=BG2wsTTnrP0&list=PLFUP9jG-TDp-CVdTbHvql-WoADl4gNkKj&index=19)
+
 
 ### 5. 팀 소개
 #### 조주영 (201924586, 전기컴퓨터공학부-정보컴퓨터공학전공)
